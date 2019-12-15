@@ -3,8 +3,9 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const url = process.env.MONGODB_URI;
-const MongoClient = require('mongodb').MongoClient;
-const mongoose = require('mongoose');
+
+const MongoClient = require('mongodb');
+
 
 const restService = express();
 
@@ -44,8 +45,13 @@ restService.post("/echo", function(req, res) {
   /* add Mongo DB transaction*/
 
   var resString = "problem_with mongo"
+  // Now use sessionId to find session in database
 
-  /*MongoClient.connect(url,  function(err, db) {
+  //1. Check wether document with given session Id is already there
+  var user = findOrCreateSession("123");
+
+
+  MongoClient.MongoClient.connect(url,  function(err, db) {
 
       if (err) throw err;
 
@@ -74,7 +80,7 @@ restService.post("/echo", function(req, res) {
         db.close();
       });
 
-  })*/
+  })
 
   return res.json({
     payload: speechResponse,
@@ -85,6 +91,39 @@ restService.post("/echo", function(req, res) {
     source: "webhook-echo-sample"
   });
 });
+
+
+function findOrCreateSession(sessionId) {
+  var user= {}
+  //is session known?
+  MongoClient.MongoClient.connect(url, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("heroku_5pv6gkcs");
+
+
+    var id = MongoClient.ObjectID('5df62b365f483a00179d59a1');//req.params.id
+    db.collection('sessions').findOne({'_id':id})
+        .then(function(doc) {
+          if(!doc)
+            throw new Error('No record found.');
+          console.log(doc);//else case
+        });
+
+  })
+
+
+
+
+  //
+  user = {
+    "_id": sessionId,
+    "lighthouseKeeper": false
+  }
+
+
+
+  return user;
+}
 
 restService.post("/audio", function(req, res) {
   var speech = "";

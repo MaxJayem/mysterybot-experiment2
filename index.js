@@ -4,7 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const url = process.env.MONGODB_URI;
 
-const MongoClient = require('mongodb');
+const MongoClient = require('mongodb').MongoClient;
 
 
 const restService = express();
@@ -51,7 +51,7 @@ restService.post("/echo", function(req, res) {
   var user = findOrCreateSession("123");
 
 
-  MongoClient.MongoClient.connect(url,  function(err, db) {
+  /*MongoClient.MongoClient.connect(url,  function(err, db) {
 
       if (err) throw err;
 
@@ -80,7 +80,7 @@ restService.post("/echo", function(req, res) {
         db.close();
       });
 
-  })
+  })*/
 
   return res.json({
     payload: speechResponse,
@@ -96,13 +96,13 @@ restService.post("/echo", function(req, res) {
 function findOrCreateSession(sessionId) {
   var user= {}
   //is session known?
-  MongoClient.MongoClient.connect(url, function(err, db) {
+  MongoClient.connect(url, function(err, db) {
     if (err) throw err;
     var dbo = db.db("heroku_5pv6gkcs");
 
 
-    var id = MongoClient.ObjectID('5df62b365f483a00179d59a1');//req.params.id
-    db.collection('sessions').findOne({'_id':id})
+    var id = '5df62b365f483a00179d59a1'//req.params.id
+    dbo.collection('sessions').findOne({'_id':id})
         .then(function(doc) {
           if(!doc)
             throw new Error('No record found.');

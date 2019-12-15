@@ -4,7 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const url = process.env.MONGODB_URI;
 
-const MongoClient = require('mongodb').MongoClient;
+const mongo = require('mongodb');
 
 
 const restService = express();
@@ -51,7 +51,7 @@ restService.post("/echo", function(req, res) {
   var user = findOrCreateSession("123");
 
 
-  /*MongoClient.MongoClient.connect(url,  function(err, db) {
+  /*mongo.MongoClient.connect(url,  function(err, db) {
 
       if (err) throw err;
 
@@ -96,12 +96,12 @@ restService.post("/echo", function(req, res) {
 function findOrCreateSession(sessionId) {
   var user= {}
   //is session known?
-  MongoClient.connect(url, function(err, db) {
+  mongo.MongoClient.connect(url, function(err, db) {
     if (err) throw err;
     var dbo = db.db("heroku_5pv6gkcs");
 
-
-    var id = '5df62b365f483a00179d59a1'//req.params.id
+    var id = new require('mongodb').ObjectID('5df62b365f483a00179d59a1');
+    //var id = '5df62b365f483a00179d59a1'//req.params.id
     dbo.collection('sessions').findOne({'_id':id})
         .then(function(doc) {
           if(!doc)

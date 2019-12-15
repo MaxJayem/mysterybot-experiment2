@@ -42,6 +42,7 @@ restService.post("/echo", function(req, res) {
 
   /* add Mongo DB transaction*/
 
+  var resString = "problem_with mongo"
 
   MongoClient.connect(url,  function(err, db) {
 
@@ -54,7 +55,7 @@ restService.post("/echo", function(req, res) {
         db.close
       })
 
-    var resString = "problem_with mongo"
+
       //adding data
       var myobj = [
         { "msg_from" : "tadhack", "msg_to" : "gihan", "msg_body" : "promotion 1" },

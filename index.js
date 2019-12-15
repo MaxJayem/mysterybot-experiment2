@@ -20,7 +20,7 @@ restService.post("/echo", function(req, res) {
     req.body.queryResult.parameters.echoText
       ? req.body.queryResult.parameters.echoText
       : "Seems like some problem. Speak again.";
-  
+
   var speechResponse = {
     google: {
       expectUserResponse: true,
@@ -35,11 +35,11 @@ restService.post("/echo", function(req, res) {
       }
     }
   };
-  
+
   return res.json({
     payload: speechResponse,
     //data: speechResponse,
-    fulfillmentText: "Hello from fulfillment",
+    fulfillmentText: "Hello from fulfillment2",
     speech: speech,
     displayText: speech,
     source: "webhook-echo-sample"
@@ -49,7 +49,7 @@ restService.post("/echo", function(req, res) {
 restService.post("/audio", function(req, res) {
   var speech = "";
   switch (req.body.result.parameters.AudioSample.toLowerCase()) {
-    //Speech Synthesis Markup Language 
+    //Speech Synthesis Markup Language
     case "music one":
       speech =
         '<speak><audio src="https://actions.google.com/sounds/v1/cartoon/slide_whistle.ogg">did not get your audio file</audio></speak>';

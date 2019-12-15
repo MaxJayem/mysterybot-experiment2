@@ -2,6 +2,8 @@
 
 const express = require("express");
 const bodyParser = require("body-parser");
+const url = process.env.MONGODB_URI;
+const MongoClient = require('mongodb').MongoClient;
 
 const restService = express();
 
@@ -36,10 +38,46 @@ restService.post("/echo", function(req, res) {
     }
   };
 
+
+
+  /* add Mongo DB transaction*/
+
+
+  MongoClient.connect(url,  function(err, db) {
+
+      if (err) throw err;
+
+      var dbo = db.db("heroku_5pv6gkcs");
+
+      dbo.createCollection("sessions", function(err, res) {
+        if (err) throw err;
+        db.close
+      })
+
+    var resString = "problem_with mongo"
+      //adding data
+      var myobj = [
+        { "msg_from" : "tadhack", "msg_to" : "gihan", "msg_body" : "promotion 1" },
+        { "msg_from" : "dialog", "msg_to" : "gihan", "msg_body" : "promotion 1" },
+        { "msg_from" : "tadhack", "msg_to" : "gihan", "msg_body" : null, "msg_date" : "2018-10-13T16:43:39.989Z" },
+        { "msg_from" : "tadhack", "msg_to" : "gihan", "msg_body" : null, "msg_date" : "2018-10-13T16:45:55.447Z" },
+        { "msg_from" : "tadhack", "msg_to" : "gihan", "msg_body" : null, "msg_date" : "2018-10-13T16:50:08.034Z" },
+        { "msg_from" : "tadhack", "msg_to" : "gihan", "msg_body" : "send your data", "msg_date" : "2018-10-13T16:51:53.639Z" },
+        { "msg_from" : "tadhack", "msg_to" : "gihan", "msg_body" : "msg", "msg_date" : "2018-10-13T17:45:40.873Z" },
+        { "msg_from" : "tadhack", "msg_to" : "gihan", "msg_body" : "We need your NIC numbers and vehicle registration numbers for security purpose. Please find the attached, fill the details and get back to us ASAP.  \r\n \r\nThanks and Regards,\r\n\r\nM. S. M. Siyas\r\n", "msg_date" : "2018-10-14T02:09:15.574Z" }
+      ]
+      dbo.collection("sessions").insertMany(myobj, function(err, res) {
+        if (err) throw err;
+        resString="Number of documents inserted: " + res.insertedCount;
+        db.close();
+      });
+
+  })
+
   return res.json({
     payload: speechResponse,
     //data: speechResponse,
-    fulfillmentText: "Hello from fulfillment2",
+    fulfillmentText: resString,
     speech: speech,
     displayText: speech,
     source: "webhook-echo-sample"

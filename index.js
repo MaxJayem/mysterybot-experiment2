@@ -4,6 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const url = process.env.MONGODB_URI;
 const MongoClient = require('mongodb').MongoClient;
+import mongoose from 'mongoose';
 
 const restService = express();
 
@@ -44,7 +45,7 @@ restService.post("/echo", function(req, res) {
 
   var resString = "problem_with mongo"
 
-  MongoClient.connect(url,  function(err, db) {
+  /*MongoClient.connect(url,  function(err, db) {
 
       if (err) throw err;
 
@@ -73,7 +74,7 @@ restService.post("/echo", function(req, res) {
         db.close();
       });
 
-  })
+  })*/
 
   return res.json({
     payload: speechResponse,

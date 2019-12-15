@@ -4,7 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const url = process.env.MONGODB_URI;
 const MongoClient = require('mongodb').MongoClient;
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const restService = express();
 

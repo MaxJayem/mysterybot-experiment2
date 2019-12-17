@@ -47,7 +47,7 @@ restService.post("/echo", function (req, res) {
     // Now use sessionId to find session in database
 
     //1. Check wether document with given session Id is already there
-    var user = findOrCreateSession("123");
+    //var user = findOrCreateSession("123");
 
 
     /*mongo.MongoClient.connect(url,  function(err, db) {

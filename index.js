@@ -114,7 +114,7 @@ restService.post("/addSession", function (req, res) {
             }
         }
     };
-
+    var resString = "problem_with mongo";
     mongo.MongoClient.connect(url,  function(err, db) {
 
         if (err) throw err;
@@ -130,7 +130,7 @@ restService.post("/addSession", function (req, res) {
 
         /* add Mongo DB transaction*/
 
-        var resString = "problem_with mongo"
+
         var dbo = db.db("heroku_5pv6gkcs");
         dbo.collection("sessions").insertMany(myobj, function (err, res) {
             if (err) throw err;

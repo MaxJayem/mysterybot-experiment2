@@ -152,6 +152,70 @@ restService.post("/addSession", function (req, res) {
         source: "webhook-echo-sample"
     });
 });
+
+
+
+restService.post("/findSession", function (req, res) {
+    var speech =
+        req.body.queryResult &&
+        req.body.queryResult.parameters &&
+        req.body.queryResult.parameters.echoText
+            ? req.body.queryResult.parameters.echoText
+            : "Seems like some problem. Speak again.";
+
+    var sessionId = req.body.session || "No session available";
+
+    var speechResponse = {
+        google: {
+            expectUserResponse: true,
+            richResponse: {
+                items: [
+                    {
+                        simpleResponse: {
+                            textToSpeech: speech
+                        }
+                    }
+                ]
+            }
+        }
+    };
+    var resString = "problem_with mongo";
+    mongo.MongoClient.connect(url,  function(err, db) {
+
+        if (err) throw err;
+
+        /* add Mongo DB transaction*/
+
+
+        var dbo = db.db("heroku_5pv6gkcs");
+        dbo.collection('sessions').findOne({'session_id':sessionId})
+            .then(function(doc) {
+                if(!doc) {
+                    db.close();
+                    throw new Error('No record found.');
+                }
+                 else {
+                    console.log(doc);
+                    db.close();
+                }
+
+            });
+
+    })
+
+
+
+
+    return res.json({
+        payload: speechResponse,
+        //data: speechResponse,
+        fulfillmentText: resString,
+        speech: speech,
+        displayText: speech,
+        source: "webhook-echo-sample"
+    });
+});
+
 /*async function  findOrCreateSession  (sessionId) {
   var user= {}
   //is session known?

@@ -154,7 +154,6 @@ restService.post("/addSession", function (req, res) {
 });
 
 
-
 restService.post("/findSession", function (req, res) {
     var speech =
         req.body.queryResult &&

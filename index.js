@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const url = process.env.MONGODB_URI;
 
 const mongo = require('mongodb');
+const Schema = mongoose.Schema;
 
 
 const restService = express();
@@ -16,6 +17,10 @@ restService.use(
 );
 
 restService.use(bodyParser.json());
+
+
+var Session = new Schema({ session_id: String, query_text: String });
+
 
 restService.post("/echo", function (req, res) {
     var speech =
@@ -91,6 +96,19 @@ restService.post("/echo", function (req, res) {
     });
 });
 
+
+restService.get("/", async (req, res, next) => {
+    try {
+        const sessions = await Session.find({}).exec();
+        return res.status(200).json({
+            result: sessions
+        });
+    } catch (err) {
+        return res.status(500).json({
+            status: 'error'
+        });
+    }
+})
 
 restService.post("/addSession", function (req, res) {
     var speech =

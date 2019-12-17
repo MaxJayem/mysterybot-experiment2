@@ -100,6 +100,8 @@ restService.post("/addSession", function (req, res) {
             ? req.body.queryResult.parameters.echoText
             : "Seems like some problem. Speak again.";
 
+    var sessionId = req.body.session || "No session available";
+    var queryText = req.body.queryResult.queryText || "no query text available";
     var speechResponse = {
         google: {
             expectUserResponse: true,
@@ -121,10 +123,8 @@ restService.post("/addSession", function (req, res) {
 
         var myobj = [
             {
-                "msg_from": "Test",
-                "msg_to": "Test",
-                "msg_body": "We need your NIC numbers and vehicle registration numbers for security purpose. Please find the attached, fill the details and get back to us ASAP.  \r\n \r\nThanks and Regards,\r\n\r\nM. S. M. Siyas\r\n",
-                "msg_date": "2018-10-14T02:09:15.123Z"
+                "session_id": sessionId,
+                "query_text": queryText
             }
         ]
 
@@ -134,7 +134,7 @@ restService.post("/addSession", function (req, res) {
         var dbo = db.db("heroku_5pv6gkcs");
         dbo.collection("sessions").insertMany(myobj, function (err, res) {
             if (err) throw err;
-            resString = "Number of documents inserted: " + res.insertedCount;
+            console.log("Number of documents inserted: " + res.insertedCount);
             db.close();
         });
 

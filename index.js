@@ -3,10 +3,10 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const url = process.env.MONGODB_URI;
-
+const mongoose = require("mongoose");
 const mongo = require('mongodb');
-const Schema = mongoose.Schema;
 
+const Session = require('./session');
 
 const restService = express();
 
@@ -16,10 +16,74 @@ restService.use(
     })
 );
 
+
+
 restService.use(bodyParser.json());
 
+mongoose.connect('mongodb://localhost:27017/mysterybot', {useNewUrlParser: true, useCreateIndex: true});
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
-var Session = new Schema({ session_id: String, query_text: String });
+
+restService.post("/add", function (req, res) {
+    console.log(req.body.session)
+    var session = new Session(req.body);
+    session.save(function(err, session){
+        if(err){
+            res.status(400).json({
+                message: err.message
+            });
+        }else{
+            res.status(201).json(session);
+        }
+    })
+})
+
+
+restService.get("/getAll", async (req, res, next) => {
+    try {
+        const sessions = await Session.find({}).exec();
+        return res.status(200).json({
+            result: sessions
+        });
+    } catch (err) {
+        return res.status(500).json({
+            status: 'error'
+        });
+    }
+})
+
+restService.post("/test", async (req, res, next) => {
+    try {
+        const session = await Session.findOne({session: req.body.session}).exec();
+        if (session){
+            return res.status(200).json({
+                result: session
+            });
+        }else{
+            var ses = new Session(req.body);
+            ses.save(function(err, ses){
+                if(err){
+                    res.status(400).json({
+                        message: err.message
+                    });
+                }else{
+                    res.status(201).json(ses);
+                }
+            })
+        }
+
+    } catch (err) {
+        return res.status(500).json({
+            status: 'error'
+        });
+    }
+})
+
+
+
+
+
 
 
 restService.post("/echo", function (req, res) {
@@ -97,18 +161,7 @@ restService.post("/echo", function (req, res) {
 });
 
 
-restService.get("/", async (req, res, next) => {
-    try {
-        const sessions = await Session.find({}).exec();
-        return res.status(200).json({
-            result: sessions
-        });
-    } catch (err) {
-        return res.status(500).json({
-            status: 'error'
-        });
-    }
-})
+
 
 restService.post("/addSession", function (req, res) {
     var speech =
@@ -462,3 +515,4 @@ restService.post("/slack-test", function (req, res) {
 restService.listen(process.env.PORT || 8000, function () {
     console.log("Server up and listening");
 });
+;

@@ -53,8 +53,15 @@ restService.get("/getAll", async (req, res, next) => {
     }
 })
 
+restService.get("/",  (req, res, next) => {
+        return res.status(200).json({
+            message: 'It is working'
+        });
+})
+
 restService.post("/test", async (req, res, next) => {
     try {
+        console.log(req)
         const session = await Session.findOne({session: req.body.session}).exec();
         if (session){
             return res.status(200).json({

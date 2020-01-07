@@ -8,6 +8,18 @@ const SessionSchema = new Schema({
     },
     query_text : {
         type : String,
+    },
+    lighthouse : {
+        type: Boolean,
+        default: false
+    },
+    tries : {
+        type: Number,
+        default: 0
+    },
+    false_tries: {
+        type: Number,
+        default: 0
     }
 });
 module.exports = mongoose.model('Session', SessionSchema);

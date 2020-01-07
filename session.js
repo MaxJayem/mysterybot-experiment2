@@ -13,6 +13,10 @@ const SessionSchema = new Schema({
         type: Boolean,
         default: false
     },
+    shipAccident: {
+        type: Boolean,
+        default: false
+    },
     tries : {
         type: Number,
         default: 0

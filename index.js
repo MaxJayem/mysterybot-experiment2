@@ -17,8 +17,13 @@ restService.use(
 );
 
 
-
 restService.use(bodyParser.json());
+
+
+restService.listen(process.env.PORT || 8000, function () {
+    console.log("Server up and listening");
+});
+;
 
 mongoose.connect('mongodb://localhost:27017/mysterybot', {useNewUrlParser: true, useCreateIndex: true});
 var db = mongoose.connection;
@@ -28,16 +33,16 @@ db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 restService.post("/add", function (req, res) {
     console.log(req.body.session)
     var session = new Session(req.body);
-    session.save(function(err, session){
-        if(err){
+    session.save(function (err, session) {
+        if (err) {
             res.status(400).json({
                 message: err.message
             });
-        }else{
+        } else {
             res.status(201).json(session);
         }
     })
-})
+});
 
 
 restService.get("/getAll", async (req, res, next) => {
@@ -53,28 +58,42 @@ restService.get("/getAll", async (req, res, next) => {
     }
 })
 
-restService.get("/",  (req, res, next) => {
-        return res.status(200).json({
-            message: 'It is working'
-        });
+restService.get("/", (req, res, next) => {
+    return res.status(200).json({
+        message: 'It is working'
+    });
 })
+
+restService.post("/start", async (req, res, next) => {
+    try {
+        const session = await getSession(req.body.session);
+        session.tries++;
+        const newSession = await Session.findOneAndUpdate(session.session, session, false).exec();
+        return res.status(200).json({
+            result: newSession
+        });
+    } catch (err) {
+        return res.status(500).json({
+            status: 'error'
+        });
+    }
+});
 
 restService.post("/test", async (req, res, next) => {
     try {
-        console.log(req)
         const session = await Session.findOne({session: req.body.session}).exec();
-        if (session){
+        if (session) {
             return res.status(200).json({
                 result: session
             });
-        }else{
+        } else {
             var ses = new Session(req.body);
-            ses.save(function(err, ses){
-                if(err){
+            ses.save(function (err, ses) {
+                if (err) {
                     res.status(400).json({
                         message: err.message
                     });
-                }else{
+                } else {
                     res.status(201).json(ses);
                 }
             })
@@ -87,10 +106,26 @@ restService.post("/test", async (req, res, next) => {
     }
 })
 
+async function getSession(ses) {
+    try {
+        const session = await Session.findOne({session: ses}).exec();
+        if (session) {
+            return session;
+        } else {
+            var newSes = new Session(req.body);
+            newSes.save(function (err, newSes) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    return newSes;
+                }
+            })
+        }
+    } catch (err) {
+        console.log(err);
+    }
 
-
-
-
+}
 
 
 restService.post("/echo", function (req, res) {
@@ -168,8 +203,6 @@ restService.post("/echo", function (req, res) {
 });
 
 
-
-
 restService.post("/addSession", function (req, res) {
     var speech =
         req.body.queryResult &&
@@ -195,7 +228,7 @@ restService.post("/addSession", function (req, res) {
         }
     };
     var resString = "problem_with mongo";
-    mongo.MongoClient.connect(url,  function(err, db) {
+    mongo.MongoClient.connect(url, function (err, db) {
 
         if (err) throw err;
 
@@ -217,8 +250,6 @@ restService.post("/addSession", function (req, res) {
         });
 
     })
-
-
 
 
     return res.json({
@@ -257,7 +288,7 @@ restService.post("/findSession", function (req, res) {
         }
     };
     var resString = "problem_with mongo";
-    mongo.MongoClient.connect(url,  function(err, db) {
+    mongo.MongoClient.connect(url, function (err, db) {
 
         if (err) throw err;
 
@@ -265,13 +296,12 @@ restService.post("/findSession", function (req, res) {
 
 
         var dbo = db.db("heroku_5pv6gkcs");
-        dbo.collection('sessions').findOne({'session_id':sessionId})
-            .then(function(doc) {
-                if(!doc) {
+        dbo.collection('sessions').findOne({'session_id': sessionId})
+            .then(function (doc) {
+                if (!doc) {
                     db.close();
                     throw new Error('No record found.');
-                }
-                 else {
+                } else {
                     console.log(doc);
                     db.close();
                 }
@@ -279,8 +309,6 @@ restService.post("/findSession", function (req, res) {
             });
 
     })
-
-
 
 
     return res.json({
@@ -351,175 +379,3 @@ restService.post("/findSession", function (req, res) {
   return user;
 }*/
 
-restService.post("/audio", function (req, res) {
-    var speech = "";
-    switch (req.body.result.parameters.AudioSample.toLowerCase()) {
-        //Speech Synthesis Markup Language
-        case "music one":
-            speech =
-                '<speak><audio src="https://actions.google.com/sounds/v1/cartoon/slide_whistle.ogg">did not get your audio file</audio></speak>';
-            break;
-        case "music two":
-            speech =
-                '<speak><audio clipBegin="1s" clipEnd="3s" src="https://actions.google.com/sounds/v1/cartoon/slide_whistle.ogg">did not get your audio file</audio></speak>';
-            break;
-        case "music three":
-            speech =
-                '<speak><audio repeatCount="2" soundLevel="-15db" src="https://actions.google.com/sounds/v1/cartoon/slide_whistle.ogg">did not get your audio file</audio></speak>';
-            break;
-        case "music four":
-            speech =
-                '<speak><audio speed="200%" src="https://actions.google.com/sounds/v1/cartoon/slide_whistle.ogg">did not get your audio file</audio></speak>';
-            break;
-        case "music five":
-            speech =
-                '<audio src="https://actions.google.com/sounds/v1/cartoon/slide_whistle.ogg">did not get your audio file</audio>';
-            break;
-        case "delay":
-            speech =
-                '<speak>Let me take a break for 3 seconds. <break time="3s"/> I am back again.</speak>';
-            break;
-        //https://www.w3.org/TR/speech-synthesis/#S3.2.3
-        case "cardinal":
-            speech = '<speak><say-as interpret-as="cardinal">12345</say-as></speak>';
-            break;
-        case "ordinal":
-            speech =
-                '<speak>I stood <say-as interpret-as="ordinal">10</say-as> in the class exams.</speak>';
-            break;
-        case "characters":
-            speech =
-                '<speak>Hello is spelled as <say-as interpret-as="characters">Hello</say-as></speak>';
-            break;
-        case "fraction":
-            speech =
-                '<speak>Rather than saying 24+3/4, I should say <say-as interpret-as="fraction">24+3/4</say-as></speak>';
-            break;
-        case "bleep":
-            speech =
-                '<speak>I do not want to say <say-as interpret-as="bleep">F&%$#</say-as> word</speak>';
-            break;
-        case "unit":
-            speech =
-                '<speak>This road is <say-as interpret-as="unit">50 foot</say-as> wide</speak>';
-            break;
-        case "verbatim":
-            speech =
-                '<speak>You spell HELLO as <say-as interpret-as="verbatim">hello</say-as></speak>';
-            break;
-        case "date one":
-            speech =
-                '<speak>Today is <say-as interpret-as="date" format="yyyymmdd" detail="1">2017-12-16</say-as></speak>';
-            break;
-        case "date two":
-            speech =
-                '<speak>Today is <say-as interpret-as="date" format="dm" detail="1">16-12</say-as></speak>';
-            break;
-        case "date three":
-            speech =
-                '<speak>Today is <say-as interpret-as="date" format="dmy" detail="1">16-12-2017</say-as></speak>';
-            break;
-        case "time":
-            speech =
-                '<speak>It is <say-as interpret-as="time" format="hms12">2:30pm</say-as> now</speak>';
-            break;
-        case "telephone one":
-            speech =
-                '<speak><say-as interpret-as="telephone" format="91">09012345678</say-as> </speak>';
-            break;
-        case "telephone two":
-            speech =
-                '<speak><say-as interpret-as="telephone" format="1">(781) 771-7777</say-as> </speak>';
-            break;
-        // https://www.w3.org/TR/2005/NOTE-ssml-sayas-20050526/#S3.3
-        case "alternate":
-            speech =
-                '<speak>IPL stands for <sub alias="indian premier league">IPL</sub></speak>';
-            break;
-    }
-    return res.json({
-        speech: speech,
-        displayText: speech,
-        source: "webhook-echo-sample"
-    });
-});
-
-restService.post("/video", function (req, res) {
-    return res.json({
-        speech:
-            '<speak>  <audio src="https://www.youtube.com/watch?v=VX7SSnvpj-8">did not get your MP3 audio file</audio></speak>',
-        displayText:
-            '<speak>  <audio src="https://www.youtube.com/watch?v=VX7SSnvpj-8">did not get your MP3 audio file</audio></speak>',
-        source: "webhook-echo-sample"
-    });
-});
-
-restService.post("/slack-test", function (req, res) {
-    var slack_message = {
-        text: "Details of JIRA board for Browse and Commerce",
-        attachments: [
-            {
-                title: "JIRA Board",
-                title_link: "http://www.google.com",
-                color: "#36a64f",
-
-                fields: [
-                    {
-                        title: "Epic Count",
-                        value: "50",
-                        short: "false"
-                    },
-                    {
-                        title: "Story Count",
-                        value: "40",
-                        short: "false"
-                    }
-                ],
-
-                thumb_url:
-                    "https://stiltsoft.com/blog/wp-content/uploads/2016/01/5.jira_.png"
-            },
-            {
-                title: "Story status count",
-                title_link: "http://www.google.com",
-                color: "#f49e42",
-
-                fields: [
-                    {
-                        title: "Not started",
-                        value: "50",
-                        short: "false"
-                    },
-                    {
-                        title: "Development",
-                        value: "40",
-                        short: "false"
-                    },
-                    {
-                        title: "Development",
-                        value: "40",
-                        short: "false"
-                    },
-                    {
-                        title: "Development",
-                        value: "40",
-                        short: "false"
-                    }
-                ]
-            }
-        ]
-    };
-    return res.json({
-        speech: "speech",
-        displayText: "speech",
-        source: "webhook-echo-sample",
-        data: {
-            slack: slack_message
-        }
-    });
-});
-
-restService.listen(process.env.PORT || 8000, function () {
-    console.log("Server up and listening");
-});
-;

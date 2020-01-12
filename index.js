@@ -25,9 +25,9 @@ restService.listen(process.env.PORT || 8000, function () {
 });
 ;
 
-//mongoose.connect('mongodb://localhost:27017/mysterybot', {useNewUrlParser: true, useCreateIndex: true});
+mongoose.connect('mongodb://localhost:27017/mysterybot', {useNewUrlParser: true, useCreateIndex: true});
 
-mongoose.connect('heroku_5pv6gkcs', {useNewUrlParser: true, useCreateIndex: true});
+//mongoose.connect('heroku_5pv6gkcs', {useNewUrlParser: true, useCreateIndex: true});
 
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
@@ -83,41 +83,55 @@ restService.post("/start", async (req, res, next) => {
 
 
 restService.post("/dialogflow_request", async (req, res, next) => {
-    //Handles request from Dialogflow
-    //Returns Dialogflow Response
-    let newSession;
-    try {
-        const session = await getSession(req.body.session);
-        session.tries++;
-        newSession = await Session.findOneAndUpdate(session.session, session, false).exec();
+        //Handles request from Dialogflow
+        //Returns Dialogflow Response
+
+        try {
+            const session = await getSession(req.body.session);
+
+
+            console.log(newSession);
+            let newEntitiesMentioned = await getNewEntitiesMentioned(req, session);
+
+            //Neue Entitäten der session hinzufügen
+
+
+
+
+            //WENN keine neuen Entitäen gefunden -> dann fallback intent (selbst implementiert)
+
+            //Wenn Entitäten gefunden
+
+            //Ermitteln, wieviele Entitäen gelöst wurden
+
+
+
+
+
+            //Session aktualisieren
+            session.tries++;
+            let newSession = await Session.findOneAndUpdate(session.session, session, false).exec();
+
+
+
+
 
     } catch (err) {
         //Todo: Fehlerantwort an Nutzer zurückgeben
         console.log(err)
     }
 
-    console.log("newSession");
 
-/*    var speechResponse = {
-        google: {
-            expectUserResponse: true,
-            richResponse: {
-                items: [
-                    {
-                        simpleResponse: {
-                            textToSpeech: speech
-                        }
-                    }
-                ]
-            }
-        }
-    };
 
-    return res.json({
-        fulfillmentText: "asd",
-        payload: speechResponse,
-        source: "webhook-echo-sample"
-    });*/
+
+
+
+    //console.log(req);
+
+    //Get new entities
+
+    //console.log(newEntitiesMentioned)
+
 
     return agentAnswers("Hello", res);
 
@@ -129,13 +143,32 @@ restService.post("/dialogflow_request", async (req, res, next) => {
 *
 *
 *  */
+
+
+async function getNewEntitiesMentioned(request, session) {
+
+    let parameters = request.body.queryResult.parameters;
+    Promise.resolve(parameters);
+    if (parameters.leuchtturm != null && !session.lighthouse) {
+        console.log("Leuchtturm neu!")
+    }
+
+    console.log(parameters);
+    return parameters;
+
+
+}
+
 async function getSession(ses) {
     try {
         const session = await Session.findOne({session: ses}).exec();
         if (session) {
             return session;
         } else {
-            var newSes = new Session(req.body);
+            const newSes = new Session({
+                session: ses
+
+            });
             newSes.save(function (err, newSes) {
                 if (err) {
                     console.log(err);
@@ -150,6 +183,8 @@ async function getSession(ses) {
 
 }
 
+
+
 async function agentAnswers(answer, res) {
 
     var speechResponse = {
@@ -159,7 +194,7 @@ async function agentAnswers(answer, res) {
                 items: [
                     {
                         simpleResponse: {
-                            textToSpeech: "asd"
+                            textToSpeech: answer
                         }
                     }
                 ]

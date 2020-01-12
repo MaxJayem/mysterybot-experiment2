@@ -31,7 +31,6 @@ db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
 
 restService.post("/add", function (req, res) {
-    console.log(req.body.session)
     var session = new Session(req.body);
     session.save(function (err, session) {
         if (err) {
@@ -79,33 +78,54 @@ restService.post("/start", async (req, res, next) => {
     }
 });
 
-restService.post("/test", async (req, res, next) => {
+
+restService.post("/dialogflow_request", async (req, res, next) => {
+    //Handles request from Dialogflow
+    //Returns Dialogflow Response
+    let newSession;
     try {
-        const session = await Session.findOne({session: req.body.session}).exec();
-        if (session) {
-            return res.status(200).json({
-                result: session
-            });
-        } else {
-            var ses = new Session(req.body);
-            ses.save(function (err, ses) {
-                if (err) {
-                    res.status(400).json({
-                        message: err.message
-                    });
-                } else {
-                    res.status(201).json(ses);
-                }
-            })
-        }
+        const session = await getSession(req.body.session);
+        session.tries++;
+        newSession = await Session.findOneAndUpdate(session.session, session, false).exec();
 
     } catch (err) {
-        return res.status(500).json({
-            status: 'error'
-        });
+        //Todo: Fehlerantwort an Nutzer zurückgeben
+        console.log(err)
     }
-})
 
+    console.log("newSession");
+
+/*    var speechResponse = {
+        google: {
+            expectUserResponse: true,
+            richResponse: {
+                items: [
+                    {
+                        simpleResponse: {
+                            textToSpeech: speech
+                        }
+                    }
+                ]
+            }
+        }
+    };
+
+    return res.json({
+        fulfillmentText: "asd",
+        payload: speechResponse,
+        source: "webhook-echo-sample"
+    });*/
+
+    return agentAnswers("Hello", res);
+
+
+});
+
+
+/*
+*
+*
+*  */
 async function getSession(ses) {
     try {
         const session = await Session.findOne({session: ses}).exec();
@@ -126,6 +146,63 @@ async function getSession(ses) {
     }
 
 }
+
+async function agentAnswers(answer, res) {
+
+    var speechResponse = {
+        google: {
+            expectUserResponse: true,
+            richResponse: {
+                items: [
+                    {
+                        simpleResponse: {
+                            textToSpeech: "asd"
+                        }
+                    }
+                ]
+            }
+        }
+    };
+
+    return res.json({
+        fulfillmentText: answer,
+        payload: speechResponse,
+        source: "webhook-echo-sample"
+    });
+}
+
+restService.post("/test", async (req, res, next) => {
+
+    // load session
+    // TODO: in Methode auslagern
+    let session;
+    try {
+        session = await Session.findOne({session: req.body.session}).exec();
+        if (session) {
+            console.log("Session! --> " + session)
+            return res.status(200).json({
+                result: session
+            });
+
+        } else {
+            var ses = new Session(req.body);
+            ses.save(function (err, ses) {
+                if (err) {
+                    res.status(400).json({
+                        message: err.message
+                    });
+                } else {
+                    res.status(201).json(ses);
+                }
+            })
+        }
+
+    } catch (err) {
+        return res.status(500).json({
+            status: 'error'
+        });
+    }
+})
 
 
 restService.post("/echo", function (req, res) {
@@ -203,64 +280,6 @@ restService.post("/echo", function (req, res) {
 });
 
 
-restService.post("/addSession", function (req, res) {
-    var speech =
-        req.body.queryResult &&
-        req.body.queryResult.parameters &&
-        req.body.queryResult.parameters.echoText
-            ? req.body.queryResult.parameters.echoText
-            : "Seems like some problem. Speak again.";
-
-    var sessionId = req.body.session || "No session available";
-    var queryText = req.body.queryResult.queryText || "no query text available";
-    var speechResponse = {
-        google: {
-            expectUserResponse: true,
-            richResponse: {
-                items: [
-                    {
-                        simpleResponse: {
-                            textToSpeech: speech
-                        }
-                    }
-                ]
-            }
-        }
-    };
-    var resString = "problem_with mongo";
-    mongo.MongoClient.connect(url, function (err, db) {
-
-        if (err) throw err;
-
-        var myobj = [
-            {
-                "session_id": sessionId,
-                "query_text": queryText
-            }
-        ]
-
-        /* add Mongo DB transaction*/
-
-
-        var dbo = db.db("heroku_5pv6gkcs");
-        dbo.collection("sessions").insertMany(myobj, function (err, res) {
-            if (err) throw err;
-            console.log("Number of documents inserted: " + res.insertedCount);
-            db.close();
-        });
-
-    })
-
-
-    return res.json({
-        payload: speechResponse,
-        //data: speechResponse,
-        fulfillmentText: resString,
-        speech: speech,
-        displayText: speech,
-        source: "webhook-echo-sample"
-    });
-});
 
 
 restService.post("/findSession", function (req, res) {
@@ -320,62 +339,4 @@ restService.post("/findSession", function (req, res) {
         source: "webhook-echo-sample"
     });
 });
-
-/*async function  findOrCreateSession  (sessionId) {
-  var user= {}
-  //is session known?
-  try {
-    mongo.MongoClient.connect(url, async function(err, db) {
-   /!*   if (err) throw err;
-      var dbo = db.db("heroku_5pv6gkcs");
-
-      var id = new require('mongodb').ObjectID('5df62b365f483a00179d59a1');
-      //var id = '5df62b365f483a00179d59a1'//req.params.id
-      dbo.collection('sessions').findOne({'_id':id})
-          .then(function(doc) {
-            if(!doc)
-              throw new Error('No record found.');
-            console.log(doc);//else case
-          });*!/
-
-
-      //
-
-      assert.equal(null, err);
-      var dbo = db.db('heroku_5pv6gkcs');
-      var id = new require('mongodb').ObjectID('5df62b365f483a00179d59a1');
-      //Step 1: declare promise
-
-      var myPromise =  function() {
-        return new Promise((resolve, reject) => {
-
-          dbo.collection('sessions').findOne({'_id':id})
-              .then(function(err, data) {
-                err
-                    ? reject(err)
-                    : resolve(data);
-
-                console.log(data);//else case
-              });
-
-        });
-      };
-      //await myPromise
-      var result = await myPromise();
-      //continue execution
-      db.close();
-      res.json(result);
-
-    })
-
-    //
-    user = {
-      "_id": sessionId,
-      "lighthouseKeeper": false
-    }
-  } catch (e) {
-    next(e)
-  }
-  return user;
-}*/
 

@@ -33,7 +33,9 @@ mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex
 /*
 var db = mongoose.connection;
 */
+/*
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+*/
 
 
 restService.post("/add", function (req, res) {

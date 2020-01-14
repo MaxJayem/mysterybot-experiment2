@@ -25,13 +25,14 @@ restService.listen(process.env.PORT || 8000, function () {
 });
 ;
 
-mongoose.connect('mongodb://localhost:27017/mysterybot', {useNewUrlParser: true, useCreateIndex: true});
+mongoose.connect('mongodb://localhost:27017/mysterybot', {useNewUrlParser: true, useCreateIndex: true,  useUnifiedTopology: true });
 /*
 mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
 */
 /*
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 */
+mongoose.set('useFindAndModify', false);
 
 
 restService.post("/add", function (req, res) {
@@ -67,21 +68,6 @@ restService.get("/", (req, res, next) => {
     });
 })
 
-restService.post("/start", async (req, res, next) => {
-    try {
-        const session = await getSession(req.body.session);
-        session.tries++;
-        const newSession = await Session.findOneAndUpdate(session.session, session, false).exec();
-        return res.status(200).json({
-            result: newSession
-        });
-    } catch (err) {
-        return res.status(500).json({
-            status: 'error'
-        });
-    }
-});
-
 
 restService.post("/dialogflow_request", async (req, res, next) => {
         //Handles request from Dialogflow
@@ -92,6 +78,8 @@ restService.post("/dialogflow_request", async (req, res, next) => {
 
             if(req.body.queryResult.action == 'hint'){
                 console.log("Hinweis geben")
+                session.tries++;
+                const newSession = await Session.findOneAndUpdate({ _id: session._id }, { $set: session }).exec();
                 const answer =  getHint(session);
                 return agentAnswers(answer, res);
             }
@@ -114,7 +102,8 @@ restService.post("/dialogflow_request", async (req, res, next) => {
 
             //Session aktualisieren
             session.tries++;
-            let newSession = await Session.findOneAndUpdate(session.session, session, false).exec();
+            const newSession = await Session.findOneAndUpdate({ _id: session._id }, { $set: session }).exec();
+
             console.log(newSession);
 
 
@@ -143,19 +132,27 @@ restService.post("/dialogflow_request", async (req, res, next) => {
 });
 
 function getHint(session){
+    //TODO: Hintlogik neu
     if(session.lighthouse == false){
         return ("Du brauchst also einen Tipp. Bei dem Haus handelt es sich nicht um ein gewöhnliches Haus.")
     }
-    if(session.shipAccident == false){
-        return ("Du brauchst also einen Tipp. Bei dem Haus handelt es sich nicht um ein gewöhnliches Haus.")
+    if(session.forgot == false){
+        return ("Etwas Hilfe für dich: Was war mit dem Licht?")
     }
-
+    if(session.news == false){
+        return ("Tipp: Was lief im Radio?")
+    }
+    if(session.shipAccident == false){
+        return ("Hier ein kleiner Tipp: Denke doch einmal daran, was der Mann im Radio gehört haben könnte.")
+    }
+    if(session.responsible == false){
+        return ("Warum hat er sich umgebracht?")
+    }
 
 }
 
 
 async function getNewEntitiesMentioned(request, session) {
-
     let parameters = request.body.queryResult.parameters;
     Promise.resolve(parameters);
 

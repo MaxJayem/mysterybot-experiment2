@@ -151,6 +151,48 @@ function getHint(session){
 
 }
 
+async function checkSolvingProcess(session) {
+    //Sollte nach dem update des session objekts aufgerufen werden
+    let count = 0;
+
+    if(session.lighthouse) count++;
+    if(session.news) count++;
+    if(session.forgot) count++;
+    if(session.responsible) count++;
+    if(session.shipAccident) count++;
+
+    return count;
+}
+
+
+async function giveSolvingProcessAnswerString(count) {
+    let answerString = "";
+
+    switch (count) {
+        case 0:
+            answerString = ""
+            break;
+        case 1:
+            answerString = "Gut! Du hast schon ein wichtiges Detail herausgefunden!!"
+            break;
+        case 2:
+            answerString = "Gut! Du hast schon ein wichtiges Detail herausgefunden!!"
+            break;
+        case 3:
+            answerString = "Gut! Du hast schon ein wichtiges Detail herausgefunden!!"
+            break;
+        case 4:
+            answerString = "Gut! Du hast schon ein wichtiges Detail herausgefunden!!"
+            break;
+        case 5:
+            answerString = "Gut! Du hast schon ein wichtiges Detail herausgefunden!!"
+            break;
+        default:
+            break;
+    }
+
+    return answerString;
+}
 
 async function getNewEntitiesMentioned(request, session) {
     let parameters = request.body.queryResult.parameters;

@@ -158,8 +158,14 @@ async function getNewEntitiesMentioned(request, session) {
 
     let parameters = request.body.queryResult.parameters;
     Promise.resolve(parameters);
-    if (parameters.leuchtturm != null && !session.lighthouse) {
-        console.log("Leuchtturm neu!")
+
+    let ret = [];
+
+    if (parameters.hasOwnProperty('leuchtturm')
+        && parameters.leuchtturm
+        && !session.lighthouse) {
+        console.log("1. Leuchtturm erraten!")
+        ret.push("news")
     }
 
     if (parameters.hasOwnProperty('nachrichten')

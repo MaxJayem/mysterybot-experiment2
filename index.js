@@ -25,10 +25,10 @@ restService.listen(process.env.PORT || 8000, function () {
 });
 ;
 
-/*
 mongoose.connect('mongodb://localhost:27017/mysterybot', {useNewUrlParser: true, useCreateIndex: true});
-*/
+/*
 mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
+*/
 
 
 
@@ -90,6 +90,8 @@ restService.post("/dialogflow_request", async (req, res, next) => {
 
             if(req.body.queryResult.action == 'hint'){
                 console.log("Hinweis geben")
+                const answer =  getHint(session);
+                return agentAnswers(answer, res);
             }
             console.log(newSession);
             let newEntitiesMentioned = await getNewEntitiesMentioned(req, session);
@@ -140,9 +142,14 @@ restService.post("/dialogflow_request", async (req, res, next) => {
 });
 
 function getHint(session){
-    if (session.lighthouse == false){
-        agentAnswers("Du brauchst also einen Tipp. Bei dem Haus handelt es sich nicht um ein gewöhnliches Haus.")
+    if(session.lighthouse == false){
+        return ("Du brauchst also einen Tipp. Bei dem Haus handelt es sich nicht um ein gewöhnliches Haus.")
     }
+    if(session.shipAccident == false){
+        return ("Du brauchst also einen Tipp. Bei dem Haus handelt es sich nicht um ein gewöhnliches Haus.")
+    }
+
+
 }
 
 

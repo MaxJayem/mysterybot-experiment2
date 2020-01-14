@@ -25,13 +25,9 @@ restService.listen(process.env.PORT || 8000, function () {
 });
 ;
 
-
 mongoose.connect('mongodb://localhost:27017/mysterybot', {useNewUrlParser: true, useCreateIndex: true});
-
-//mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
-//mongoose.connect('heroku_5pv6gkcs', {useNewUrlParser: true, useCreateIndex: true});
 /*
-var db = mongoose.connection;
+mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
 */
 /*
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
@@ -94,8 +90,11 @@ restService.post("/dialogflow_request", async (req, res, next) => {
         try {
             const session = await getSession(req.body.session);
 
-
-
+            if(req.body.queryResult.action == 'hint'){
+                console.log("Hinweis geben")
+                const answer =  getHint(session);
+                return agentAnswers(answer, res);
+            }
             let newEntitiesMentioned = await getNewEntitiesMentioned(req, session);
             console.log(newEntitiesMentioned)
             //Neue Entitäten der session hinzufügen
@@ -138,30 +137,29 @@ restService.post("/dialogflow_request", async (req, res, next) => {
     //console.log(newEntitiesMentioned)
 
 
-    return agentAnswers("Hello", res);
+    return agentAnswers("If you see this, the webhook is working", res);
 
 
 });
 
+function getHint(session){
+    if(session.lighthouse == false){
+        return ("Du brauchst also einen Tipp. Bei dem Haus handelt es sich nicht um ein gewöhnliches Haus.")
+    }
+    if(session.shipAccident == false){
+        return ("Du brauchst also einen Tipp. Bei dem Haus handelt es sich nicht um ein gewöhnliches Haus.")
+    }
 
-/*
-*
-*
-*  */
+
+}
 
 
 async function getNewEntitiesMentioned(request, session) {
 
     let parameters = request.body.queryResult.parameters;
     Promise.resolve(parameters);
-
-    let ret = [];
-
-    if (parameters.hasOwnProperty('leuchtturm')
-        && parameters.leuchtturm
-        && !session.lighthouse) {
-        console.log("1. Leuchtturm erraten!")
-        ret.push("leuchtturm")
+    if (parameters.leuchtturm != null && !session.lighthouse) {
+        console.log("Leuchtturm neu!")
     }
 
     if (parameters.hasOwnProperty('nachrichten')
@@ -244,8 +242,7 @@ async function agentAnswers(answer, res) {
     });
 }
 
-restService.post("/test", async (req, res, next) => {
-
+/*restService.post("/test", async (req, res, next) => {
     // load session
     // TODO: in Methode auslagern
     let session;
@@ -275,9 +272,7 @@ restService.post("/test", async (req, res, next) => {
             status: 'error'
         });
     }
-})
-
-
+})*/
 restService.post("/echo", function (req, res) {
     var speech =
         req.body.queryResult &&

@@ -25,13 +25,11 @@ restService.listen(process.env.PORT || 8000, function () {
 });
 ;
 
+/*
 mongoose.connect('mongodb://localhost:27017/mysterybot', {useNewUrlParser: true, useCreateIndex: true,  useUnifiedTopology: true });
-/*
+*/
 mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
-*/
-/*
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-*/
+
 mongoose.set('useFindAndModify', false);
 
 
@@ -77,57 +75,45 @@ restService.post("/dialogflow_request", async (req, res, next) => {
             const session = await getSession(req.body.session);
 
             if(req.body.queryResult.action == 'hint'){
-                console.log("Hinweis geben")
                 session.tries++;
                 const newSession = await Session.findOneAndUpdate({ _id: session._id }, { $set: session }).exec();
                 const answer =  getHint(session);
                 return agentAnswers(answer, res);
             }
-            let newEntitiesMentioned = await getNewEntitiesMentioned(req, session);
-            console.log(newEntitiesMentioned)
-            //Neue Entitäten der session hinzufügen
+            if(req.body.queryResult.action == 'anyText') {
+                let newEntitiesMentioned = await getNewEntitiesMentioned(req, session);
+                console.log(newEntitiesMentioned)
+                //Neue Entitäten der session hinzufügen
 
+                //WENN keine neuen Entitäen gefunden -> dann fallback intent (selbst implementiert)
 
+                //Wenn Entitäten gefunden
 
+                //Ermitteln, wieviele Entitäen gelöst wurden
 
-            //WENN keine neuen Entitäen gefunden -> dann fallback intent (selbst implementiert)
-
-            //Wenn Entitäten gefunden
-
-            //Ermitteln, wieviele Entitäen gelöst wurden
-
-
-
-
-
-            //Session aktualisieren
-            session.tries++;
-            const newSession = await Session.findOneAndUpdate({ _id: session._id }, { $set: session }).exec();
-
-            console.log(newSession);
-
-
+                //Session aktualisieren
+                session.tries++;
+                const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
+                return agentAnswers("Ja, das ist richtig", res);
+            }
+            else{
+                session.tries++;
+                const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
+                return agentAnswers("Nein", res);
+            }
 
 
     } catch (err) {
         //Todo: Fehlerantwort an Nutzer zurückgeben
+            agentAnswers("Ein unerwarteter Fehler ist passiert.", res)
         console.log(err)
     }
-
-
-
-
-
 
     //console.log(req);
 
     //Get new entities
 
     //console.log(newEntitiesMentioned)
-
-
-    return agentAnswers("If you see this, the webhook is working", res);
-
 
 });
 
@@ -148,7 +134,6 @@ function getHint(session){
     if(session.responsible == false){
         return ("Warum hat er sich umgebracht?")
     }
-
 }
 
 async function checkSolvingProcess(session) {
@@ -163,7 +148,6 @@ async function checkSolvingProcess(session) {
 
     return count;
 }
-
 
 async function giveSolvingProcessAnswerString(count) {
     let answerString = "";

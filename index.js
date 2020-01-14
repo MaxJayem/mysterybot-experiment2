@@ -25,10 +25,10 @@ restService.listen(process.env.PORT || 8000, function () {
 });
 ;
 
-/*
+
 mongoose.connect('mongodb://localhost:27017/mysterybot', {useNewUrlParser: true, useCreateIndex: true});
-*/
-mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
+
+//mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
 //mongoose.connect('heroku_5pv6gkcs', {useNewUrlParser: true, useCreateIndex: true});
 /*
 var db = mongoose.connection;
@@ -95,9 +95,9 @@ restService.post("/dialogflow_request", async (req, res, next) => {
             const session = await getSession(req.body.session);
 
 
-            console.log(newSession);
-            let newEntitiesMentioned = await getNewEntitiesMentioned(req, session);
 
+            let newEntitiesMentioned = await getNewEntitiesMentioned(req, session);
+            console.log(newEntitiesMentioned)
             //Neue Entitäten der session hinzufügen
 
 
@@ -116,7 +116,7 @@ restService.post("/dialogflow_request", async (req, res, next) => {
             //Session aktualisieren
             session.tries++;
             let newSession = await Session.findOneAndUpdate(session.session, session, false).exec();
-
+            console.log(newSession);
 
 
 
@@ -154,14 +154,44 @@ async function getNewEntitiesMentioned(request, session) {
 
     let parameters = request.body.queryResult.parameters;
     Promise.resolve(parameters);
-    if (parameters.leuchtturm != null && !session.lighthouse) {
-        console.log("Leuchtturm neu!")
+
+    let ret = [];
+
+    if (parameters.hasOwnProperty('leuchtturm')
+        && parameters.leuchtturm
+        && !session.lighthouse) {
+        console.log("1. Leuchtturm erraten!")
+        ret.push("leuchtturm")
     }
 
-    console.log(parameters);
-    return parameters;
+    if (parameters.hasOwnProperty('nachrichten')
+        && parameters.nachrichten
+        && !session.news) {
+        console.log("2. News erraten!")
+        ret.push("news")
+    }
 
+    if (parameters.hasOwnProperty('schiffsunglueck')
+        && parameters.schiffsunglueck
+        && !session.shipAccident) {
+        console.log("3. Schiffsunfall erraten!")
+        ret.push("schiffsunglueck")
+    }
 
+    if (parameters.hasOwnProperty('vergessen')
+        && parameters.vergessen
+        && !session.forgot) {
+        console.log("4. Licht vergessen erraten!")
+        ret.push("vergessen")
+    }
+
+    if (parameters.hasOwnProperty('schuld')
+        && parameters.schuld
+        && !session.forgot) {
+        console.log("5. Schuld erraten!")
+        ret.push("schuld")
+    }
+    return ret;
 }
 
 async function getSession(ses) {

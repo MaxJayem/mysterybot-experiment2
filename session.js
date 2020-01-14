@@ -13,6 +13,18 @@ const SessionSchema = new Schema({
         type: Boolean,
         default: false
     },
+    news : {
+        type: Boolean,
+        default: false
+    },
+    forgot : {
+        type: Boolean,
+        default: false
+    },
+    responsible : {
+        type: Boolean,
+        default: false
+    },
     shipAccident: {
         type: Boolean,
         default: false

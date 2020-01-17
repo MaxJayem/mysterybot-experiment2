@@ -32,9 +32,10 @@ mongoose.connect('mongodb://localhost:27017/mysterybot', {
     useCreateIndex: true,
     useUnifiedTopology: true
 });
-*/
 
+*/
 mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
+
 mongoose.set('useFindAndModify', false);
 
 
@@ -87,6 +88,7 @@ restService.post("/dialogflow_request", async (req, res, next) => {
 
             let newEntitiesMentioned = await getNewEntitiesMentioned(req, session);
 
+            console.log("new entities mentioned " +newEntitiesMentioned)
             let oldEntitiesMentioned = await getOldEntitiesMentioned(req)
 
             session = await updateSessionEntities(session, newEntitiesMentioned);
@@ -117,7 +119,7 @@ restService.post("/dialogflow_request", async (req, res, next) => {
 
             // CASE 3:  OLD ENTITIES MENTIONED
 
-                return agentAnswers(await getSolvedEntityString(newEntitiesMentioned) + "Dies hast du bereits gesagt. " + await getSolvingProcessAnswerString(solvingProcess), res);
+                return agentAnswers(await getSolvedEntityString(oldEntitiesMentioned) + "Dies hast jedoch du bereits gesagt. " + await getSolvingProcessAnswerString(solvingProcess), res);
 
             } else {
 
@@ -145,7 +147,18 @@ restService.post("/dialogflow_request", async (req, res, next) => {
             const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
             const answer = getHint(session);
             return agentAnswers(answer, res);
-        } else {
+        }
+        if (req.body.queryResult.action == 'delete_session') {
+            Session.findByIdAndRemove(req.body.session, (err, session) => {
+                if (err) {return agentAnswers("Error in Deleting mongo data", res)}
+                else {
+                    return agentAnswers("Session wurde gelöscht", res)
+                }
+            })
+        }
+
+
+        else {
 
             const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
             return agentAnswers("Intent noch nicht umgesetzt", res);
@@ -306,30 +319,34 @@ async function getAnotherSolvedEntityString(solved_entity) {
 }
 
 async function getSolvingProcessAnswerString(count) {
+
     let answerString = "";
 
-    switch (count) {
-        case 0:
-            answerString = ""
-            break;
-        case 1:
-            answerString = "Du hast bereits ein wichtiges Detail herausgefunden! "
-            break;
-        case 2:
-            answerString = "Gut! Du hast schon zwei wichtige Details herausgefunden! "
-            break;
-        case 3:
-            answerString = "Gut! Du hast schon drei wichtige Details herausgefunden! "
-            break;
-        case 4:
-            answerString = "Gut! Du hast schon vier wichtige Details herausgefunden! "
-            break;
-        case 5:
-            answerString = "Gut! Du hast schon fünf wichtige Details herausgefunden! "
-            break;
-        default:
-            break;
+    if (Math.random() > 0.5) {
+        switch (count) {
+            case 0:
+                answerString = ""
+                break;
+            case 1:
+                answerString = "Du hast bereits ein wichtiges Detail herausgefunden! "
+                break;
+            case 2:
+                answerString = "Gut! Du hast schon zwei wichtige Details herausgefunden! "
+                break;
+            case 3:
+                answerString = "Gut! Du hast schon drei wichtige Details herausgefunden! "
+                break;
+            case 4:
+                answerString = "Gut! Du hast schon vier wichtige Details herausgefunden! "
+                break;
+            case 5:
+                answerString = "Gut! Du hast schon fünf wichtige Details herausgefunden! "
+                break;
+            default:
+                break;
+        }
     }
+
 
     return answerString;
 }
@@ -370,7 +387,7 @@ async function getNewEntitiesMentioned(request, session) {
 
     if (parameters.hasOwnProperty('schuld')
         && parameters.schuld
-        && !session.forgot) {
+        && !session.schuld) {
         console.log("5. Schuld erraten!")
         ret.push("schuld")
     }

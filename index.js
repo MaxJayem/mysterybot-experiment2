@@ -87,6 +87,8 @@ restService.post("/dialogflow_request", async (req, res, next) => {
 
             let newEntitiesMentioned = await getNewEntitiesMentioned(req, session);
 
+            let oldEntitiesMentioned = await getOldEntitiesMentioned(req)
+
             session = await updateSessionEntities(session, newEntitiesMentioned);
             //Solving process bestimmen
             let solvingProcess = await checkSolvingProcess(session);
@@ -110,11 +112,18 @@ restService.post("/dialogflow_request", async (req, res, next) => {
                 //Antwort zusammenbauen
                 return agentAnswers(await getPositiveFeedback() + await getSolvedEntityString(newEntitiesMentioned) + await getSolvingProcessAnswerString(solvingProcess), res);
 
+            }
+            if (oldEntitiesMentioned.length > 0) {
+
+            // CASE 3:  OLD ENTITIES MENTIONED
+
+                return agentAnswers(await getSolvedEntityString(newEntitiesMentioned) + "Dies hast du bereits gesagt. " + await getSolvingProcessAnswerString(solvingProcess), res);
+
             } else {
 
-                // CASE 3:  NO NEW ENTITIES
+                // CASE 4:  NO ENTITIES AT ALL MANTIONED
 
-                // Keine neuen Entitäten erkannt
+                // Keine  Entitäten erkannt
                 // Fallback intent
                 session.false_tries++;
 
@@ -136,8 +145,7 @@ restService.post("/dialogflow_request", async (req, res, next) => {
             const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
             const answer = getHint(session);
             return agentAnswers(answer, res);
-        }
-        else {
+        } else {
 
             const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
             return agentAnswers("Intent noch nicht umgesetzt", res);
@@ -218,14 +226,20 @@ async function getSolvedEntityString(solvedEntities) {
             return await getSingleSolvedEntityString(solvedEntities[0])
             break;
         case 2:
-            return await getSingleSolvedEntityString(solvedEntities[0]) + await getAnotherSolvedEntityString(solvedEntities[1]);
+            return await getSingleSolvedEntityString(solvedEntities[0])
+                + await getAnotherSolvedEntityString(solvedEntities[1]);
             break;
         case 3:
-            return await getSingleSolvedEntityString(solvedEntities[0]) + await getAnotherSolvedEntityString(solvedEntities[1]) + await getAnotherSolvedEntityString(solvedEntities[2])
+            return await getSingleSolvedEntityString(solvedEntities[0])
+                + await getAnotherSolvedEntityString(solvedEntities[1])
+                + await getAnotherSolvedEntityString(solvedEntities[2])
             break;
 
         case 4:
-            return await getSingleSolvedEntityString(solvedEntities[0]) + await getAnotherSolvedEntityString(solvedEntities[1]) + await getAnotherSolvedEntityString(solvedEntities[2]) + await getAnotherSolvedEntityString(solvedEntities[3])
+            return await getSingleSolvedEntityString(solvedEntities[0])
+                + await getAnotherSolvedEntityString(solvedEntities[1])
+                + await getAnotherSolvedEntityString(solvedEntities[2])
+                + await getAnotherSolvedEntityString(solvedEntities[3])
             break;
     }
 
@@ -358,6 +372,39 @@ async function getNewEntitiesMentioned(request, session) {
         && parameters.schuld
         && !session.forgot) {
         console.log("5. Schuld erraten!")
+        ret.push("schuld")
+    }
+    return ret;
+}
+
+async function getOldEntitiesMentioned(request) {
+    let parameters = request.body.queryResult.parameters;
+    Promise.resolve(parameters);
+
+    let ret = [];
+
+    if (parameters.hasOwnProperty('leuchtturm')
+        && parameters.leuchtturm) {
+        ret.push("leuchtturm")
+    }
+
+    if (parameters.hasOwnProperty('nachrichten')
+        && parameters.nachrichten) {
+        ret.push("nachrichten")
+    }
+
+    if (parameters.hasOwnProperty('schiffsunglueck')
+        && parameters.schiffsunglueck) {
+        ret.push("schiffsunglueck")
+    }
+
+    if (parameters.hasOwnProperty('vergessen')
+        && parameters.vergessen) {
+        ret.push("vergessen")
+    }
+
+    if (parameters.hasOwnProperty('schuld')
+        && parameters.schuld) {
         ret.push("schuld")
     }
     return ret;

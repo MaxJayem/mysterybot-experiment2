@@ -26,10 +26,15 @@ restService.listen(process.env.PORT || 8000, function () {
 ;
 
 /*
-mongoose.connect('mongodb://localhost:27017/mysterybot', {useNewUrlParser: true, useCreateIndex: true,  useUnifiedTopology: true });
-*/
-mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
 
+mongoose.connect('mongodb://localhost:27017/mysterybot', {
+    useNewUrlParser: true,
+    useCreateIndex: true,
+    useUnifiedTopology: true
+});
+*/
+
+mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
 mongoose.set('useFindAndModify', false);
 
 
@@ -68,44 +73,80 @@ restService.get("/", (req, res, next) => {
 
 
 restService.post("/dialogflow_request", async (req, res, next) => {
-        //Handles request from Dialogflow
-        //Returns Dialogflow Response
+    //Handles request from Dialogflow
+    //Returns Dialogflow Response
 
-        try {
-            const session = await getSession(req.body.session);
+    try {
+        let session = await getSessionById(req.body.session);
+        //console.log(session)
 
-            if(req.body.queryResult.action == 'hint'){
-                session.tries++;
-                const newSession = await Session.findOneAndUpdate({ _id: session._id }, { $set: session }).exec();
-                const answer =  getHint(session);
-                return agentAnswers(answer, res);
+        session.tries++;
+
+
+        if (req.body.queryResult.action == 'anyText') {
+
+            let newEntitiesMentioned = await getNewEntitiesMentioned(req, session);
+
+            session = await updateSessionEntities(session, newEntitiesMentioned);
+            //Solving process bestimmen
+            let solvingProcess = await checkSolvingProcess(session);
+
+            // CASE 1:  GAME OVER: ALL ENTITES SOLVED
+
+            if (solvingProcess == 5) {
+                const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
+                console.log(solvingProcess)
+                return agentAnswers(getGameOver(), res);
             }
-            if(req.body.queryResult.action == 'anyText') {
-                let newEntitiesMentioned = await getNewEntitiesMentioned(req, session);
-                console.log(newEntitiesMentioned)
+
+
+            // CASE 2:  NEW ENTITIES MENTIONED
+
+            if (newEntitiesMentioned.length > 0) {
+
                 //Neue Entitäten der session hinzufügen
-
-                //WENN keine neuen Entitäen gefunden -> dann fallback intent (selbst implementiert)
-
-                //Wenn Entitäten gefunden
-
-                //Ermitteln, wieviele Entitäen gelöst wurden
-
-                //Session aktualisieren
-                session.tries++;
                 const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
-                return agentAnswers("Ja, das ist richtig", res);
+
+                //Antwort zusammenbauen
+                return agentAnswers(await getPositiveFeedback() + await getSolvedEntityString(newEntitiesMentioned) + await getSolvingProcessAnswerString(solvingProcess), res);
+
+            } else {
+
+                // CASE 3:  NO NEW ENTITIES
+
+                // Keine neuen Entitäten erkannt
+                // Fallback intent
+                session.false_tries++;
+
+
+                if (session.false_tries >= 3) {
+                    //give hint
+                    session.false_tries = 0;
+                    const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
+                    return agentAnswers(await getHint(newSession), res);
+                } else {
+                    //return fallback
+                    const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
+                    return agentAnswers("Da hab ich leider keine Antowort drauf - ist aber auch nicht so wichtg.", res);
+                }
             }
-            else{
-                session.tries++;
-                const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
-                return agentAnswers("Nein", res);
-            }
+
+        }
+        if (req.body.queryResult.action == 'hint') {
+            const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
+            const answer = getHint(session);
+            return agentAnswers(answer, res);
+        }
+        else {
+
+            const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
+            return agentAnswers("Intent noch nicht umgesetzt", res);
+        }
 
 
     } catch (err) {
         //Todo: Fehlerantwort an Nutzer zurückgeben
-            agentAnswers("Ein unerwarteter Fehler ist passiert.", res)
+        agentAnswers("Ein unerwarteter Fehler ist passiert.", res)
         console.log(err)
     }
 
@@ -117,39 +158,140 @@ restService.post("/dialogflow_request", async (req, res, next) => {
 
 });
 
-function getHint(session){
+
+function getGameOver() {
+    return "Gratulation! Du hast es geschafft!"
+}
+
+async function getHint(session) {
     //TODO: Hintlogik neu
-    if(session.lighthouse == false){
-        return ("Du brauchst also einen Tipp. Bei dem Haus handelt es sich nicht um ein gewöhnliches Haus.")
+    if (session.lighthouse == false) {
+        return "Du brauchst also einen Tipp. Bei dem Haus handelt es sich nicht um ein gewöhnliches Haus."
     }
-    if(session.forgot == false){
-        return ("Etwas Hilfe für dich: Was war mit dem Licht?")
+    if (session.forgot == false) {
+        return "Etwas Hilfe für dich: Was war mit dem Licht?"
     }
-    if(session.news == false){
+    if (session.news == false) {
         return ("Tipp: Was lief im Radio?")
     }
-    if(session.shipAccident == false){
-        return ("Hier ein kleiner Tipp: Denke doch einmal daran, was der Mann im Radio gehört haben könnte.")
+    if (session.shipAccident == false) {
+        return "Hier ein kleiner Tipp: Denke doch einmal daran, was der Mann im Radio gehört haben könnte."
     }
-    if(session.responsible == false){
-        return ("Warum hat er sich umgebracht?")
+    if (session.responsible == false) {
+        return "Warum hat er sich umgebracht?"
+    } else {
+        return "Kein Hint möglich"
     }
+}
+
+
+async function updateSessionEntities(session, entitiesSolved) {
+    for (let i = 0; i < entitiesSolved.length; i++) {
+        if (entitiesSolved[i] == "leuchtturm") session.lighthouse = true;
+        if (entitiesSolved[i] == "nachrichten") session.news = true;
+        if (entitiesSolved[i] == "vergessen") session.forgot = true;
+        if (entitiesSolved[i] == "schuld") session.responsible = true;
+        if (entitiesSolved[i] == "schiffsunglueck") session.shipAccident = true;
+    }
+
+    return session;
 }
 
 async function checkSolvingProcess(session) {
     //Sollte nach dem update des session objekts aufgerufen werden
     let count = 0;
 
-    if(session.lighthouse) count++;
-    if(session.news) count++;
-    if(session.forgot) count++;
-    if(session.responsible) count++;
-    if(session.shipAccident) count++;
-
+    if (session.lighthouse) count++;
+    if (session.news) count++;
+    if (session.forgot) count++;
+    if (session.responsible) count++;
+    if (session.shipAccident) count++;
+    console.log("SOLVING PROCESS COUNT: " + count)
     return count;
 }
 
-async function giveSolvingProcessAnswerString(count) {
+async function getSolvedEntityString(solvedEntities) {
+    // solved Entities is an array of minimum length 1
+
+    switch (solvedEntities.length) {
+        case 1:
+            return await getSingleSolvedEntityString(solvedEntities[0])
+            break;
+        case 2:
+            return await getSingleSolvedEntityString(solvedEntities[0]) + await getAnotherSolvedEntityString(solvedEntities[1]);
+            break;
+        case 3:
+            return await getSingleSolvedEntityString(solvedEntities[0]) + await getAnotherSolvedEntityString(solvedEntities[1]) + await getAnotherSolvedEntityString(solvedEntities[2])
+            break;
+
+        case 4:
+            return await getSingleSolvedEntityString(solvedEntities[0]) + await getAnotherSolvedEntityString(solvedEntities[1]) + await getAnotherSolvedEntityString(solvedEntities[2]) + await getAnotherSolvedEntityString(solvedEntities[3])
+            break;
+    }
+
+
+}
+
+
+async function getSingleSolvedEntityString(solved_entity) {
+    let lighthouse_solved = "Richtig, sein Haus ist ein Leuchtturm. ";
+    let news_solved = "Das stimmt! Im Radio lief ein Nachrichtensender, der etwas wichtiges zu berichten hatte! ";
+    let shipAcciddent_solved = "Richtig, in der Nacht gab es ein Schiffsunglück. ";
+    let responsible_solved = "Richtig, du bist der Lösung nahe! Er fühlt sich schuldig für etwas. "
+    let forgot_solved = "Richtig, er hat vergessen das Licht anzuschalten. ";
+    let nothing_solved = "Ist das etwa alles was dir einfällt? Wir haben hier schließlich ein Rätsel zu lösen... ";
+
+    switch (solved_entity) {
+        case "nachrichten":
+            return news_solved;
+            break;
+        case "leuchtturm":
+            return lighthouse_solved;
+            break;
+        case "schiffsunglueck":
+            return shipAcciddent_solved;
+            break;
+        case "schuld":
+            return responsible_solved;
+            break;
+        case "vergessen":
+            return forgot_solved;
+        default:
+            return nothing_solved;
+            break;
+    }
+}
+
+async function getAnotherSolvedEntityString(solved_entity) {
+    let lighthouse_solved = "Außerdem hast du damit Recht, dass er in einem Leuchtturm wohnt! ";
+    let news_solved = "Im Radio lief ein Nachrichtensender, der etwas wichtiges zu berichten hatte! ";
+    let shippingAcciddent_solved = "In der Nacht gab es ein Schiffsunglück. ";
+    let responsible_solved = "Der Mann muss sich wirklich geschämt haben! Er fühlte sich schuldig für etwas.  "
+    let forgot_solved = "Außerdem hat er vergessen das Licht anzuschalten. ";
+    let nothing_solved = "Ist das etwa alles was dir einfällt? Wir haben hier schließlich ein Rätsel zu lösen...";
+
+    switch (solved_entity) {
+        case "nachrichten":
+            return news_solved;
+            break;
+        case "leuchtturm":
+            return lighthouse_solved;
+            break;
+        case "schiffsunglueck":
+            return shippingAcciddent_solved;
+            break;
+        case "schuld":
+            return responsible_solved;
+            break;
+        case "vergessen":
+            return forgot_solved;
+        default:
+            return nothing_solved;
+            break;
+    }
+}
+
+async function getSolvingProcessAnswerString(count) {
     let answerString = "";
 
     switch (count) {
@@ -157,19 +299,19 @@ async function giveSolvingProcessAnswerString(count) {
             answerString = ""
             break;
         case 1:
-            answerString = "Gut! Du hast schon ein wichtiges Detail herausgefunden!!"
+            answerString = "Du hast bereits ein wichtiges Detail herausgefunden! "
             break;
         case 2:
-            answerString = "Gut! Du hast schon ein wichtiges Detail herausgefunden!!"
+            answerString = "Gut! Du hast schon zwei wichtige Details herausgefunden! "
             break;
         case 3:
-            answerString = "Gut! Du hast schon ein wichtiges Detail herausgefunden!!"
+            answerString = "Gut! Du hast schon drei wichtige Details herausgefunden! "
             break;
         case 4:
-            answerString = "Gut! Du hast schon ein wichtiges Detail herausgefunden!!"
+            answerString = "Gut! Du hast schon vier wichtige Details herausgefunden! "
             break;
         case 5:
-            answerString = "Gut! Du hast schon ein wichtiges Detail herausgefunden!!"
+            answerString = "Gut! Du hast schon fünf wichtige Details herausgefunden! "
             break;
         default:
             break;
@@ -188,14 +330,14 @@ async function getNewEntitiesMentioned(request, session) {
         && parameters.leuchtturm
         && !session.lighthouse) {
         console.log("1. Leuchtturm erraten!")
-        ret.push("news")
+        ret.push("leuchtturm")
     }
 
     if (parameters.hasOwnProperty('nachrichten')
         && parameters.nachrichten
         && !session.news) {
         console.log("2. News erraten!")
-        ret.push("news")
+        ret.push("nachrichten")
     }
 
     if (parameters.hasOwnProperty('schiffsunglueck')
@@ -219,6 +361,10 @@ async function getNewEntitiesMentioned(request, session) {
         ret.push("schuld")
     }
     return ret;
+}
+
+async function getPositiveFeedback() {
+    return "Sehr gut! "
 }
 
 async function getSession(ses) {
@@ -245,7 +391,30 @@ async function getSession(ses) {
 
 }
 
+async function getSessionById(sessionId) {
+    try {
+        const session = await Session.findOne({_id: sessionId}).exec();
+        if (session) {
+            return session;
+        } else {
+            const newSes = new Session({
+                _id: sessionId
 
+            });
+            newSes.save(function (err, newSes) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    return newSes;
+                }
+            })
+            return newSes;
+        }
+    } catch (err) {
+        console.log(err);
+    }
+
+}
 
 async function agentAnswers(answer, res) {
 
@@ -375,8 +544,6 @@ restService.post("/echo", function (req, res) {
         source: "webhook-echo-sample"
     });
 });
-
-
 
 
 restService.post("/findSession", function (req, res) {

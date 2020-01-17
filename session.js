@@ -2,9 +2,8 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const SessionSchema = new Schema({
-    session : {
-        type: String,
-        required : true
+    _id: {
+        type: String
     },
     query_text : {
         type : String,

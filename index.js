@@ -166,7 +166,6 @@ async function checkSolvingProcess(session) {
     return count;
 }
 
-
 async function giveSolvingProcessAnswerString(count) {
     let answerString = "";
 

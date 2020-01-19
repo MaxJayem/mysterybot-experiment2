@@ -20,22 +20,20 @@ restService.use(
 restService.use(bodyParser.json());
 
 
+
+;
+mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
+/*
 restService.listen(process.env.PORT || 8000, function () {
     console.log("Server up and listening");
 });
-;
+*/
 
-/*
 mongoose.connect('mongodb://localhost:27017/mysterybot', {
     useNewUrlParser: true,
     useCreateIndex: true,
     useUnifiedTopology: true
 });
-
-
-*/
-mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
-
 mongoose.set('useFindAndModify', false);
 
 
@@ -144,9 +142,9 @@ restService.post("/dialogflow_request", async (req, res, next) => {
 
         }
         if (req.body.queryResult.action == 'hint') {
+            session.false_tries = 0;
             const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
-            const answer = getHint(session);
-            return agentAnswers(answer, res);
+            return agentAnswers(await getHint(session), res);
         }
         if (req.body.queryResult.action == 'delete_session') {
             Session.findByIdAndRemove(req.body.session, (err, session) => {

@@ -27,15 +27,15 @@ restService.listen(process.env.PORT || 8000, function () {
 
 /*
 
+
+mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
+*/
+
 mongoose.connect('mongodb://localhost:27017/mysterybot', {
     useNewUrlParser: true,
     useCreateIndex: true,
     useUnifiedTopology: true
 });
-
-*/
-mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
-
 mongoose.set('useFindAndModify', false);
 
 
@@ -130,7 +130,7 @@ restService.post("/dialogflow_request", async (req, res, next) => {
                 session.false_tries++;
 
 
-                if (session.false_tries >= 3) {
+                if (session.false_tries >= 4) {
                     //give hint
                     session.false_tries = 0;
                     const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
@@ -138,7 +138,7 @@ restService.post("/dialogflow_request", async (req, res, next) => {
                 } else {
                     //return fallback
                     const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
-                    return agentAnswers("Da hab ich leider keine Antowort drauf - ist aber auch nicht so wichtg.", res);
+                    return agentAnswers(await getNegativeFeedback(), res);
                 }
             }
 
@@ -239,20 +239,28 @@ async function getSolvedEntityString(solvedEntities) {
             return await getSingleSolvedEntityString(solvedEntities[0])
             break;
         case 2:
-            return await getSingleSolvedEntityString(solvedEntities[0])
+            return await getFirstSolvedEntityString(solvedEntities[0])
                 + await getAnotherSolvedEntityString(solvedEntities[1]);
             break;
         case 3:
-            return await getSingleSolvedEntityString(solvedEntities[0])
+            return await getFirstSolvedEntityString(solvedEntities[0])
                 + await getAnotherSolvedEntityString(solvedEntities[1])
                 + await getAnotherSolvedEntityString(solvedEntities[2])
             break;
 
         case 4:
-            return await getSingleSolvedEntityString(solvedEntities[0])
+            return await getFirstSolvedEntityString(solvedEntities[0])
                 + await getAnotherSolvedEntityString(solvedEntities[1])
                 + await getAnotherSolvedEntityString(solvedEntities[2])
                 + await getAnotherSolvedEntityString(solvedEntities[3])
+            break;
+
+        case 5:
+            return await getFirstSolvedEntityString(solvedEntities[0])
+                + await getAnotherSolvedEntityString(solvedEntities[1])
+                + await getAnotherSolvedEntityString(solvedEntities[2])
+                + await getAnotherSolvedEntityString(solvedEntities[3])
+                + await getAnotherSolvedEntityString(solvedEntities[4])
             break;
     }
 
@@ -261,11 +269,11 @@ async function getSolvedEntityString(solvedEntities) {
 
 
 async function getSingleSolvedEntityString(solved_entity) {
-    let lighthouse_solved = "Richtig, sein Haus ist ein Leuchtturm. ";
-    let news_solved = "Das stimmt! Im Radio lief ein Nachrichtensender, der etwas wichtiges zu berichten hatte! ";
-    let shipAcciddent_solved = "Richtig, in der Nacht gab es ein Schiffsunglück. ";
-    let responsible_solved = "Richtig, du bist der Lösung nahe! Er fühlt sich schuldig für etwas. "
-    let forgot_solved = "Richtig, er hat vergessen das Licht anzuschalten. ";
+    let lighthouse_solved = "Das Haus ist alles andere als ein gewöhnliches.. Der Mann wohnt in einem Leuchtturm! ";
+    let news_solved = "Im Radio lief ein Nachrichtensender, der etwas wichtiges zu berichten hatte! Was war passiert? ";
+    let shipAcciddent_solved = "Auf dem Meer nahe der Küste hat es ein Schiffsunglück gegeben! ";
+    let responsible_solved = "Der Mann fühlte sich für irgendetwas schuldig... "
+    let forgot_solved = "Normalerweise hatte er das Licht immer angestellt, doch in dieser Nacht vergaß er es! ";
     let nothing_solved = "Ist das etwa alles was dir einfällt? Wir haben hier schließlich ein Rätsel zu lösen... ";
 
     switch (solved_entity) {
@@ -290,11 +298,11 @@ async function getSingleSolvedEntityString(solved_entity) {
 }
 
 async function getAnotherSolvedEntityString(solved_entity) {
-    let lighthouse_solved = "Außerdem hast du damit Recht, dass er in einem Leuchtturm wohnt! ";
-    let news_solved = "Im Radio lief ein Nachrichtensender, der etwas wichtiges zu berichten hatte! ";
-    let shippingAcciddent_solved = "In der Nacht gab es ein Schiffsunglück. ";
-    let responsible_solved = "Der Mann muss sich wirklich geschämt haben! Er fühlte sich schuldig für etwas.  "
-    let forgot_solved = "Außerdem hat er vergessen das Licht anzuschalten. ";
+    let lighthouse_solved = "und du hast damit Recht, dass er in einem Leuchtturm wohnt! ";
+    let news_solved = "und im Radio lief ein Nachrichtensender, der etwas wichtiges zu berichten hatte! ";
+    let shippingAcciddent_solved = "und in der Nacht hat es ein schreckliches Schiffsunglück gegeben. ";
+    let responsible_solved = "und der Mann muss sich wirklich geschämt haben! Er fühlte sich schuldig für etwas.  "
+    let forgot_solved = "und außerdem hat er vergessen das Licht anzuschalten. ";
     let nothing_solved = "Ist das etwa alles was dir einfällt? Wir haben hier schließlich ein Rätsel zu lösen...";
 
     switch (solved_entity) {
@@ -306,6 +314,35 @@ async function getAnotherSolvedEntityString(solved_entity) {
             break;
         case "schiffsunglueck":
             return shippingAcciddent_solved;
+            break;
+        case "schuld":
+            return responsible_solved;
+            break;
+        case "vergessen":
+            return forgot_solved;
+        default:
+            return nothing_solved;
+            break;
+    }
+}
+
+async function getFirstSolvedEntityString (solved_entity) {
+    let lighthouse_solved = "Das Haus ist alles andere als ein gewöhnliches.. Der Mann wohnt in einem Leuchtturm ";
+    let news_solved = "Im Radio lief ein Nachrichtensender, der etwas wichtiges zu berichten hatte ";
+    let shipAcciddent_solved = "Auf dem Meer nahe der Küste hat es ein furchtbares Schiffsunglück gegeben ";
+    let responsible_solved = "Der Mann fühlte sich für irgendetwas schuldig "
+    let forgot_solved = "Er hatte vergessen, den Lichtschalter zu betätigen ";
+    let nothing_solved = "Ist das etwa alles was dir einfällt? Wir haben hier schließlich ein Rätsel zu lösen ";
+
+    switch (solved_entity) {
+        case "nachrichten":
+            return news_solved;
+            break;
+        case "leuchtturm":
+            return lighthouse_solved;
+            break;
+        case "schiffsunglueck":
+            return shipAcciddent_solved;
             break;
         case "schuld":
             return responsible_solved;
@@ -331,16 +368,16 @@ async function getSolvingProcessAnswerString(count) {
                 answerString = "Du hast bereits ein wichtiges Detail herausgefunden! "
                 break;
             case 2:
-                answerString = "Gut! Du hast schon zwei wichtige Details herausgefunden! "
+                answerString = "Weiter so! Jetzt hast du schon zwei wichtige Details herausgefunden! "
                 break;
             case 3:
-                answerString = "Gut! Du hast schon drei wichtige Details herausgefunden! "
+                answerString = "Bravo! Du kommst der Lösung immer näher! "
                 break;
             case 4:
-                answerString = "Gut! Du hast schon vier wichtige Details herausgefunden! "
+                answerString = "Das Puzzle ist beinahe komplett! Nur noch ein letztes Detail! "
                 break;
             case 5:
-                answerString = "Gut! Du hast schon fünf wichtige Details herausgefunden! "
+                answerString = "Gut! Du hast alle wichtigen Details herausgefunden! "
                 break;
             default:
                 break;
@@ -428,7 +465,37 @@ async function getOldEntitiesMentioned(request) {
 }
 
 async function getPositiveFeedback() {
-    return "Sehr gut! "
+    let rdm = Math.random();
+
+    if (rdm > 0.75) {
+        return "Genau richtig! "
+    } else if (rdm> 0.5) {
+        return "Spitze! "
+    } else if (rdm > 0.25) {
+        return "Klasse - das stimmt! "
+    } else {
+        return "Sehr gut! "
+    }
+
+
+
+}
+
+async function getNegativeFeedback() {
+    let rdm = Math.random();
+
+    if (rdm > 0.75) {
+        return "Da hab ich leider keine Antowort drauf - ist aber auch nicht so wichtig.."
+    } else if (rdm> 0.5) {
+        return "Darauf fällt mir keine Antowort ein."
+    } else if (rdm > 0.25) {
+        return "Da musst du jemand anderen Fragen.."
+    } else {
+        return "Das weiß ich nicht. Frag nochmal anders!"
+    }
+
+
+
 }
 
 async function getSession(ses) {
@@ -504,37 +571,7 @@ async function agentAnswers(answer, res) {
     });
 }
 
-/*restService.post("/test", async (req, res, next) => {
-    // load session
-    // TODO: in Methode auslagern
-    let session;
-    try {
-        session = await Session.findOne({session: req.body.session}).exec();
-        if (session) {
-            console.log("Session! --> " + session)
-            return res.status(200).json({
-                result: session
-            });
 
-        } else {
-            var ses = new Session(req.body);
-            ses.save(function (err, ses) {
-                if (err) {
-                    res.status(400).json({
-                        message: err.message
-                    });
-                } else {
-                    res.status(201).json(ses);
-                }
-            })
-        }
-
-    } catch (err) {
-        return res.status(500).json({
-            status: 'error'
-        });
-    }
-})*/
 restService.post("/echo", function (req, res) {
     var speech =
         req.body.queryResult &&

@@ -27,15 +27,15 @@ restService.listen(process.env.PORT || 8000, function () {
 /*
 
 
+mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
+
+*/
+
 mongoose.connect('mongodb://localhost:27017/mysterybot', {
     useNewUrlParser: true,
     useCreateIndex: true,
     useUnifiedTopology: true
 });
-
-*/
-mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
-
 mongoose.set('useFindAndModify', false);
 
 
@@ -150,7 +150,13 @@ restService.post("/dialogflow_request", async (req, res, next) => {
         }
         if (req.body.queryResult.action == 'giveProcess') {
             let solvingProcess = await checkSolvingProcess(session);
+            console.log("Give process")
+            console.log(solvingProcess)
+
+
             let solvedEntities = await getSolvedEntities(session);
+            console.log("Give solvedEntities")
+            console.log(solvedEntities)
             return agentAnswers(await getSolvingProcessEntityString(solvedEntities) + await getSolvingProcessAnswerString(solvingProcess), res);
         }
         if (req.body.queryResult.action == 'delete_session') {
@@ -504,7 +510,7 @@ async function getNewEntitiesMentioned(request, session) {
 
     if (parameters.hasOwnProperty('schuld')
         && parameters.schuld
-        && !session.schuld) {
+        && !session.responsible) {
         console.log("5. Schuld erraten!")
         ret.push("schuld")
     }
@@ -536,7 +542,7 @@ async function getSolvedEntities (session) {
         ret.push("vergessen")
     }
 
-    if (session.schuld) {
+    if (session.responsible) {
         console.log("5. Schuld erraten!")
         ret.push("schuld")
     }

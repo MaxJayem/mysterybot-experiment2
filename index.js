@@ -101,7 +101,7 @@ restService.post("/dialogflow_request", async (req, res, next) => {
             if (solvingProcess == 5) {
                 const newSession = await Session.findOneAndUpdate({_id: session._id}, {$set: session}).exec();
                 console.log(solvingProcess)
-                return agentAnswers(getGameOver(), res);
+                return agentAnswers(getGameOver(session.tries), res);
             }
 
 
@@ -190,8 +190,8 @@ restService.post("/dialogflow_request", async (req, res, next) => {
 });
 
 
-function getGameOver() {
-    return "Gratulation! Du hast es geschafft! Nun die ganze Geschichte: Der Bewohner der einsamen Behausung war Wärter des wichtigsten Leuchtturms an einer Küste. Im Radio wurde an diesem Morgen vom größtem Schiffsunglück aller Zeiten berichtet.\n" +
+function getGameOver(tries) {
+    return "Gratulation! Du hast es " + tries + " geschafft! Nun die ganze Geschichte: Der Bewohner der einsamen Behausung war Wärter des wichtigsten Leuchtturms an einer Küste. Im Radio wurde an diesem Morgen vom größtem Schiffsunglück aller Zeiten berichtet.\n" +
         "\n" +
         "Am Abend zuvor hatte der Leuchtturmwärter tatsächlich vergessen, das Licht einzuschalten. Diesen Fehler würde er sich nie verzeihen..."
 }

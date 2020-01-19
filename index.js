@@ -26,16 +26,16 @@ restService.listen(process.env.PORT || 8000, function () {
 
 /*
 
-
-mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
-
-*/
-
 mongoose.connect('mongodb://localhost:27017/mysterybot', {
     useNewUrlParser: true,
     useCreateIndex: true,
     useUnifiedTopology: true
 });
+
+
+*/
+mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useCreateIndex: true});
+
 mongoose.set('useFindAndModify', false);
 
 

@@ -603,13 +603,13 @@ async function getNegativeFeedback() {
     let rdm = Math.random();
 
     if (rdm > 0.75) {
-        return "Das weiß ich nicht. Versuche es doch mit einer anderen Frage!"
+        return "💂‍♀ Das weiß ich nicht. Versuche es doch mit einer anderen Frage!"
     } else if (rdm > 0.5) {
-        return "Darauf fällt mir keine Antowort ein."
+        return "💂‍Darauf fällt mir keine Antowort ein."
     } else if (rdm > 0.25) {
-        return "Dazu kann ich dir leider nichts sagen.."
+        return "💂‍Dazu kann ich dir leider nichts sagen.."
     } else {
-        return "Das weiß ich nicht. Frag nochmal anders!"
+        return "💂‍♀Das weiß ich nicht. Frag nochmal anders!"
     }
 
 

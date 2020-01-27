@@ -120,7 +120,7 @@ restService.post("/dialogflow_request", async (req, res, next) => {
 
                 // CASE 3:  OLD ENTITIES MENTIONED
 
-                return agentAnswers(await getSolvedEntityString(oldEntitiesMentioned) + "Dies hast jedoch du bereits gesagt. " + await getSolvingProcessAnswerString(solvingProcess), res);
+                return agentAnswers(await getSolvedEntityString(oldEntitiesMentioned) + "Dies hast du jedoch bereits gesagt. 😉 " + await getSolvingProcessAnswerString(solvingProcess), res);
 
             } else {
 
@@ -191,9 +191,9 @@ restService.post("/dialogflow_request", async (req, res, next) => {
 
 
 function getGameOver(tries) {
-    return "Gratulation! Du hast es in " + tries + " Versuchen geschafft! Nun die ganze Geschichte: Der Bewohner der einsamen Behausung war Wärter des wichtigsten Leuchtturms an einer Küste. Im Radio wurde an diesem Morgen vom größtem Schiffsunglück aller Zeiten berichtet.\n" +
+    return "Gratulation! Du hast es in " + tries + " Versuchen geschafft! Nun die ganze Geschichte: Der Bewohner der einsamen Behausung war Wärter des wichtigsten Leuchtturms an einer Küste 🏠🛳🌊. Im Radio wurde an diesem Morgen vom größtem Schiffsunglück aller Zeiten berichtet.\n" +
         "\n" +
-        "Am Abend zuvor hatte der Leuchtturmwärter tatsächlich vergessen, das Licht einzuschalten. Diesen Fehler würde er sich nie verzeihen..."
+        "📻🗞🌊⛴💥 Am Abend zuvor hatte der Leuchtturmwärter tatsächlich vergessen, das Licht einzuschalten 💡🤦‍♂🙄. Diesen Fehler würde er sich nie verzeihen...😧😓 "
 }
 
 async function getHint(session) {
@@ -204,33 +204,33 @@ async function getHint(session) {
     if (session.lighthouse == false) {
 
         if (rdm > 0.66) {
-            return "Ein kleiner Tipp: Er wohnt nicht gerde in einem gewöhnlichen  Haus."
+            return "Ein kleiner Tipp:💡 Er wohnt nicht gerde in einem gewöhnlichen  Haus. 🏠"
         } else if (rdm > 0.33) {
-            return "Hier ein Hinweis: Sein außergewöhnliches Haus ist auch gleichzeitig sein Arbeitsplatz."
+            return "Hier ein Hinweis: 💡Sein außergewöhnliches Haus ist auch gleichzeitig sein Arbeitsplatz. 🏠🧰"
         } else {
-            return "Ich helfe dir ein bisschen. Sein Haus liegt direkt am Meer und ist kein normales Haus."
+            return "Ich helfe dir ein bisschen. Sein Haus liegt direkt am Meer und ist kein normales Haus. 🏠🌊"
         }
 
     }
     if (session.forgot == false) {
 
         if (rdm > 0.66) {
-            return "Ein kleiner Tipp: Vielleicht hat er an dem besagten Abend ja etwas anders gemacht als sonst?"
+            return "Ein kleiner Tipp: 💡Vielleicht hat er an dem besagten Abend ja etwas anders gemacht als sonst?"
         } else if (rdm > 0.33) {
-            return "Hier ein Hinweis: Denk dran, seine Aufgabe ist es das Licht jeden Abend anzuschalten."
+            return "Hier ein Hinweis: Denk dran, seine Aufgabe ist es das Licht jeden Abend anzuschalten. 🌌💡"
         } else {
-            return "Ich helfe dir ein wenig: Es ist sehr wichtig, dass das Licht jeden Abend von ihm angeschaltet wird."
+            return "Ich helfe dir ein wenig: Es ist sehr wichtig, dass das Licht jeden Abend von ihm angeschaltet wird. 🌌💡"
         }
 
     }
     if (session.news == false) {
 
         if (rdm > 0.66) {
-            return "Ein kleiner Tipp: Im Radio lief keine Musik!"
+            return "Ein kleiner Tipp: 💡 Im Radio lief keine Musik! 📻🎶"
         } else if (rdm > 0.33) {
-            return "Hier ein Hinweis: Vielleicht hat der Inhalt im Radio etwas mit seinem Sturz ins Meer zu tun?"
+            return "Hier ein Hinweis: 💡 Vielleicht hat der Inhalt im Radio etwas mit seinem Sturz ins Meer zu tun? 📻🌊"
         } else {
-            return "Tipp: Überleg doch mal, was gerade im Radio lief."
+            return "Tipp: 💡 Überleg doch mal, was gerade im Radio lief. 📻🗞✉"
         }
 
     }
@@ -238,16 +238,16 @@ async function getHint(session) {
 
         if (rdm > 0.5) {
             return "Ein kleiner Tipp: Vielleicht ist in der stürmigen Nacht etwas tragisches passiert?"
-        } else return "Hier ein Hinweis: Es kommen nachts oftmals Schiffe vorbei gefahren.."
+        } else return "Hier ein Hinweis: 💡 Es kommen nachts oftmals Schiffe vorbei gefahren.. 🌊🛳⛴"
     }
     if (session.responsible == false) {
 
         if (rdm > 0.66) {
-            return "Wie kann sich der Mann vor dem Sturz ins Meer gefühlt haben?"
+            return "Wie kann sich der Mann vor dem Sturz ins Meer gefühlt haben? 🌊💭"
         } else if (rdm > 0.33) {
-            return "Welches Gefühl könnte ihn dazu gebracht haben, sich ins Meer zu stürzen?"
+            return "Welches Gefühl könnte ihn dazu gebracht haben, sich ins Meer zu stürzen? 🌊💭"
         } else {
-            return "Vielleicht hat er etwas falsch gemacht, wie könnte er sich dadurch fühlen?"
+            return "Vielleicht hat er etwas falsch gemacht, wie könnte er sich dadurch fühlen? ⛔❌💭"
         }
     } else {
         return "Kein Hinweis möglich."
@@ -348,7 +348,7 @@ async function getSolvedEntityString(solvedEntities) {
                 + await getAnotherSolvedEntityString(solvedEntities[3])
                 + await getAnotherSolvedEntityString(solvedEntities[4])
             break;
-        default: return "Bis jetzt hast du noch nichts wichtiges erraten.."
+        default: return "Bis jetzt hast du noch nichts wichtiges erraten.. 🤔😥"
     }
 
 
@@ -356,12 +356,12 @@ async function getSolvedEntityString(solvedEntities) {
 
 
 async function getSingleSolvedEntityString(solved_entity) {
-    let lighthouse_solved = "Das Haus ist alles andere als ein gewöhnliches.. Der Mann wohnt in einem Leuchtturm! ";
-    let news_solved = "Im Radio lief ein Nachrichtensender, der etwas wichtiges zu berichten hatte! Was war passiert? ";
-    let shipAcciddent_solved = "Auf dem Meer nahe der Küste hat es ein Schiffsunglück gegeben! ";
-    let responsible_solved = "Der Mann fühlte sich für irgendetwas schuldig... "
-    let forgot_solved = "Normalerweise hatte er das Licht immer angestellt, doch in dieser Nacht vergaß er es! ";
-    let nothing_solved = "Ist das etwa alles was dir einfällt? Wir haben hier schließlich ein Rätsel zu lösen... ";
+    let lighthouse_solved = "Das Haus ist alles andere als ein gewöhnliches.. Der Mann wohnt in einem Leuchtturm 🏠🛳🌊 ";
+    let news_solved = "Im Radio lief ein Nachrichtensender, der etwas wichtiges zu berichten hatte! 📻🗞 Was war passiert? ";
+    let shipAcciddent_solved = "Auf dem Meer nahe der Küste hat es ein Schiffsunglück gegeben! 🌊⛴💥 ";
+    let responsible_solved = "Der Mann fühlte sich für irgendetwas schuldig... 😧😓 "
+    let forgot_solved = "Normalerweise hatte er das Licht immer angestellt, doch in dieser Nacht vergaß er es! 💡🤦‍♂🙄 ";
+    let nothing_solved = "Ist das etwa alles was dir einfällt? 🤔 Wir haben hier schließlich ein Rätsel zu lösen...🧐⚛ ";
 
     switch (solved_entity) {
         case "nachrichten":
@@ -385,11 +385,11 @@ async function getSingleSolvedEntityString(solved_entity) {
 }
 
 async function getAnotherSolvedEntityString(solved_entity) {
-    let lighthouse_solved = "und du hast damit Recht, dass er in einem Leuchtturm wohnt! ";
-    let news_solved = "und im Radio lief ein Nachrichtensender, der etwas wichtiges zu berichten hatte! ";
-    let shippingAcciddent_solved = "und in der Nacht hat es ein schreckliches Schiffsunglück gegeben. ";
-    let responsible_solved = "und der Mann muss sich wirklich geschämt haben! Er fühlte sich schuldig für etwas.  "
-    let forgot_solved = "und außerdem hat er vergessen das Licht anzuschalten. ";
+    let lighthouse_solved = "und du hast damit Recht, dass er in einem Leuchtturm wohnt! 🏠🛳🌊 ";
+    let news_solved = "und im Radio lief ein Nachrichtensender, der etwas wichtiges zu berichten hatte! 📻🗞 ";
+    let shippingAcciddent_solved = "und in der Nacht hat es ein schreckliches Schiffsunglück gegeben. 🌊⛴💥 ";
+    let responsible_solved = "und der Mann muss sich wirklich geschämt haben! Er fühlte sich schuldig für etwas.  😧😓  "
+    let forgot_solved = "und außerdem hat er vergessen das Licht anzuschalten. 💡🤦‍♂🙄 ";
     let nothing_solved = "Ist das etwa alles was dir einfällt? Wir haben hier schließlich ein Rätsel zu lösen...";
 
     switch (solved_entity) {
@@ -414,12 +414,12 @@ async function getAnotherSolvedEntityString(solved_entity) {
 }
 
 async function getFirstSolvedEntityString(solved_entity) {
-    let lighthouse_solved = "Das Haus ist alles andere als ein gewöhnliches.. Der Mann wohnt in einem Leuchtturm ";
-    let news_solved = "Im Radio lief ein Nachrichtensender, der etwas wichtiges zu berichten hatte ";
-    let shipAcciddent_solved = "Auf dem Meer nahe der Küste hat es ein furchtbares Schiffsunglück gegeben ";
-    let responsible_solved = "Der Mann fühlte sich für irgendetwas schuldig "
-    let forgot_solved = "Er hatte vergessen, den Lichtschalter zu betätigen ";
-    let nothing_solved = "Ist das etwa alles was dir einfällt? Wir haben hier schließlich ein Rätsel zu lösen ";
+    let lighthouse_solved = "Das Haus ist alles andere als ein gewöhnliches.. Der Mann wohnt in einem Leuchtturm 🏠🛳🌊 ";
+    let news_solved = "Im Radio lief ein Nachrichtensender, der etwas wichtiges zu berichten hatte! 📻🗞 Was war passiert? ";
+    let shipAcciddent_solved = "Auf dem Meer nahe der Küste hat es ein furchtbares Schiffsunglück gegeben  🌊⛴💥 ";
+    let responsible_solved = "Der Mann fühlte sich für irgendetwas schuldig... 😧😓 "
+    let forgot_solved = "Er hatte vergessen, den Lichtschalter zu betätigen 💡🤦‍♂🙄 ";
+    let nothing_solved = "Ist das etwa alles was dir einfällt? 🤔 Wir haben hier schließlich ein Rätsel zu lösen...🧐⚛ ";
 
     switch (solved_entity) {
         case "nachrichten":
@@ -452,19 +452,19 @@ async function getSolvingProcessAnswerString(count) {
                 answerString = ""
                 break;
             case 1:
-                answerString = "Du hast bereits ein wichtiges Detail herausgefunden! "
+                answerString = "Du hast bereits ein wichtiges Detail herausgefunden! 😎 "
                 break;
             case 2:
-                answerString = "Weiter so! Jetzt hast du schon zwei wichtige Details herausgefunden! "
+                answerString = "Weiter so! 🤗 Jetzt hast du schon zwei wichtige Details herausgefunden! "
                 break;
             case 3:
-                answerString = "Bravo! Du kommst der Lösung immer näher! Noch zwei wichtige Details sind zu lösen! "
+                answerString = "Bravo! 🤩 Du kommst der Lösung immer näher! Noch zwei wichtige Details sind zu lösen! "
                 break;
             case 4:
-                answerString = "Das Puzzle ist beinahe komplett! Nur noch ein letztes Detail! "
+                answerString = "Das Puzzle ist beinahe komplett! 🤗 Nur noch ein letztes Detail! "
                 break;
             case 5:
-                answerString = "Gut! Du hast alle wichtigen Details herausgefunden! "
+                answerString = "Gut! Du hast alle wichtigen Details herausgefunden! 🤓🤩 "
                 break;
             default:
                 break;
@@ -587,13 +587,13 @@ async function getPositiveFeedback() {
     let rdm = Math.random();
 
     if (rdm > 0.75) {
-        return "Genau richtig! "
+        return "Genau richtig! 🤗 "
     } else if (rdm > 0.5) {
-        return "Spitze! "
+        return "Spitze! 🤩 "
     } else if (rdm > 0.25) {
-        return "Klasse - das stimmt! "
+        return "Klasse - das stimmt! 🤗 "
     } else {
-        return "Sehr gut! "
+        return "Sehr gut! 🤩 "
     }
 
 
@@ -603,13 +603,13 @@ async function getNegativeFeedback() {
     let rdm = Math.random();
 
     if (rdm > 0.75) {
-        return "💂‍♀ Das weiß ich nicht. Versuche es doch mit einer anderen Frage!"
+        return "Das weiß ich nicht. Versuche es doch mit einer anderen Frage! 🤔"
     } else if (rdm > 0.5) {
-        return "💂‍Darauf fällt mir keine Antowort ein."
+        return "‍Darauf fällt mir keine Antowort ein. 🤔"
     } else if (rdm > 0.25) {
-        return "💂‍Dazu kann ich dir leider nichts sagen.."
+        return "‍Dazu kann ich dir leider nichts sagen..🤯"
     } else {
-        return "💂‍♀Das weiß ich nicht. Frag nochmal anders!"
+        return "Das weiß ich nicht. Frag nochmal anders! 🤯"
     }
 
 
